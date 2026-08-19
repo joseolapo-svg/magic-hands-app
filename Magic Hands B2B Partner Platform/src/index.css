@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-navy: #060e1e;
+  --color-navy-800: #0c1a30;
+  --color-navy-700: #112040;
+  --color-navy-600: #172a52;
+  --color-gold: #C9A84C;
+  --color-gold-light: #E2C47A;
+  --color-gold-dim: #9A7A32;
+  --color-gold-glow: rgba(201, 168, 76, 0.18);
+  --color-blue-bright: #1E6FD9;
+  --color-blue-mid: #1559B0;
+  --color-silver: #D8E2EE;
+  --color-silver-dim: #8899AA;
+  --font-sans: 'Montserrat', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: #060e1e;
+  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sticky top nav: keep content clear of the phone camera / notch.
+   env(safe-area-inset-top) is 0 in a normal browser tab or iframe, so on
+   narrow (mobile) screens we also guarantee a fixed top gap. */
+.app-nav {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@media (max-width: 640px) {
+  .app-nav {
+    padding-top: max(env(safe-area-inset-top, 0px), 55px);
+  }
+}
