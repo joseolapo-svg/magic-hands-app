@@ -1,9 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 1. Tu URL del proyecto
-const SUPABASE_URL = 'https://veknjtcgslgpirxiehkn.supabase.co/rest/v1/'
+// Usamos las variables de entorno que configuramos en Vercel
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// 2. Tu Publishable key (asegúrate de copiarla completa desde la pantalla de API Keys)
-const SUPABASE_ANON_KEY = 'sb_publishable_EJJcC1CI_aoVUVywLPu61g_ohheSR1L' // Reemplaza los puntos suspensivos con el resto de tu clave
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
