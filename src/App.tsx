@@ -310,16 +310,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       setSubmitting(false);
     }
   };
-        businessName: form.businessName,
-        contactName: form.contactName,
-        email: form.email,
-        phone: form.phone,
-        category: form.category,
-        joinedAt: new Date().toISOString().slice(0, 10),
-      }
-      onSuccess(partner)
-    }, 1400)
-  }
 
   const inp = (k: string) => ({
     style: {
