@@ -263,53 +263,31 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
     return e
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errs = validate();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const errs = validate()
     if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
+      setErrors(errs)
+      return
     }
-
-    setSubmitting(true);
-
-    try {
-      // Generamos el ID único del socio
-      const slug = form.businessName.replace(/\s+/g, "").toUpperCase().slice(0, 6);
-      const partnerId = `MH-${slug}-26`;
-
-      // Enviamos el registro directamente a Supabase
-      const { error: insertError } = await supabase.from('partners').insert({
-        id: partnerId,
-        business_name: form.businessName,
-        contact_name: form.contactName,
-        email: form.email,
-        phone: form.phone,
-        category: form.category,
-        joined_at: new Date().toISOString().slice(0, 10),
-      });
-
-      if (insertError) {
-        alert("Error al registrar: " + insertError.message);
-        setSubmitting(false);
-        return;
-      }
-
-      // Éxito
-      onSuccess({
-        id: partnerId,
-        businessName: form.businessName,
-        contactName: form.contactName,
-        email: form.email,
-        phone: form.phone,
-        category: form.category,
-        joinedAt: new Date().toISOString().slice(0, 10),
-      });
-    } catch (err) {
-      console.error(err);
-      setSubmitting(false);
+    setSubmitting(true)
+    const slug = form.businessName
+      .replace(/\s+/g, "")
+      .toUpperCase()
+      .slice(0, 6)
+    const partner: Partner = {
+      id: `MH-${slug}-26`,
+      businessName: form.businessName,
+      contactName: form.contactName,
+      email: form.email,
+      phone: form.phone,
+      category: form.category,
+      joinedAt: new Date().toISOString().slice(0, 10),
     }
-  };
+    setTimeout(() => {
+      onSuccess(partner)
+    }, 1400)
+  }
 
   const inp = (k: string) => ({
     style: {
@@ -1735,8 +1713,6 @@ function Dashboard({
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing")
   const [currentPartner, setCurrentPartner] = useState<Partner | null>(null)
-  // When Supabase is configured we start empty and load from the DB; otherwise
-  // we fall back to the in-memory seed data so the app still works locally.
   const [partners, setPartners] = useState<Partner[]>(
     isSupabaseConfigured ? [] : SEED_PARTNERS,
   )
@@ -1784,7 +1760,6 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.navy }}>
-      {/* Top-level nav only on landing/client/dashboard */}
       {(screen === "landing" || screen === "client") && (
         <Nav screen={screen} onNavigate={setScreen} />
       )}
