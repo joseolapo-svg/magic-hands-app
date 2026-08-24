@@ -263,14 +263,30 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
     return e
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) {
       setErrors(errs)
       return
     }
+
     setSubmitting(true)
+
+    // 1. Verificamos si el nombre del negocio ya existe en la base de datos
+    const { data: existingPartner, error: checkError } = await supabase
+      .from('partners')
+      .select('id')
+      .eq('business_name', form.businessName)
+      .maybeSingle()
+
+    if (existingPartner) {
+      alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.")
+      setSubmitting(false)
+      return
+    }
+
+    // 2. Si no existe, procedemos con la simulación y creación del socio
     setTimeout(() => {
       const slug = form.businessName
         .replace(/\s+/g, "")
