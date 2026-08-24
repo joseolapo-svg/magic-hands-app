@@ -114,3 +114,19 @@ export async function insertReferral(referral: ClientReferral): Promise<ClientRe
   if (error) throw error
   return toReferral(data as ReferralRow)
 }
+
+// Records that a partner accepted the Terms & Conditions when registering.
+export const TERMS_VERSION = 'PARTNER_TERMS_V1.0'
+
+export async function recordTermsAcceptance(partnerId: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) return
+  const { error } = await supabase
+    .from('partner_terms_acceptances')
+    .insert({
+      partner_id: partnerId,
+      terms_version: TERMS_VERSION,
+      accepted: true,
+      source: 'partner_landing',
+    })
+  if (error) throw error
+}
