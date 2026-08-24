@@ -264,34 +264,31 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
   }
 
 const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const errs = validate()
+    e.preventDefault();
+    const errs = validate();
     if (Object.keys(errs).length) {
-      setErrors(errs)
-      return
+      setErrors(errs);
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
-      // 1. Verificar duplicados por nombre de negocio
       const { data: existing } = await supabase
         .from('partners')
         .select('id')
         .eq('business_name', form.businessName)
-        .maybeSingle()
+        .maybeSingle();
 
       if (existing) {
-        alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.")
-        setSubmitting(false)
-        return
+        alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.");
+        setSubmitting(false);
+        return;
       }
 
-      // 2. Generar ID único
-      const slug = form.businessName.replace(/\s+/g, "").toUpperCase().slice(0, 6)
-      const partnerId = `MH-${slug}-26`
+      const slug = form.businessName.replace(/\s+/g, "").toUpperCase().slice(0, 6);
+      const partnerId = `MH-${slug}-26`;
 
-      // 3. Insertar en Supabase
       const { error: insertError } = await supabase.from('partners').insert({
         id: partnerId,
         business_name: form.businessName,
@@ -300,15 +297,14 @@ const handleSubmit = async (e: React.FormEvent) => {
         phone: form.phone,
         category: form.category,
         joined_at: new Date().toISOString().slice(0, 10),
-      })
+      });
 
       if (insertError) {
-        alert("Error al registrar: " + insertError.message)
-        setSubmitting(false)
-        return
+        alert("Error al registrar: " + insertError.message);
+        setSubmitting(false);
+        return;
       }
 
-      // 4. Éxito
       onSuccess({
         id: partnerId,
         businessName: form.businessName,
@@ -317,12 +313,12 @@ const handleSubmit = async (e: React.FormEvent) => {
         phone: form.phone,
         category: form.category,
         joinedAt: new Date().toISOString().slice(0, 10),
-      })
+      });
     } catch (err) {
-      console.error(err)
-      setSubmitting(false)
+      console.error(err);
+      setSubmitting(false);
     }
-  }
+  };
         businessName: form.businessName,
         contactName: form.contactName,
         email: form.email,
