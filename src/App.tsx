@@ -274,7 +274,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true)
 
     try {
-      // 1. Verificamos si el negocio ya existe en Supabase
+      // 1. Verificamos si el negocio ya existe en Supabase (sin declarar variables muertas)
       const { data: existingPartner } = await supabase
         .from('partners')
         .select('id')
@@ -294,30 +294,27 @@ const handleSubmit = async (e: React.FormEvent) => {
         .slice(0, 6)
       const partnerId = `MH-${slug}-26`
 
-      // 3. Insertamos usando any para evitar conflictos de tipos en TypeScript durante el build
-      const insertData: any = {
-        id: partnerId,
-        business_name: form.businessName,
-        contact_name: form.contactName,
-        email: form.email,
-        phone: form.phone,
-        category: form.category,
-        joined_at: new Date().toISOString().slice(0, 10),
-      }
-
+      // 3. Insertamos el registro
       const { error: insertError } = await supabase
         .from('partners')
-        .insert([insertData])
+        .insert([{
+          id: partnerId,
+          business_name: form.businessName,
+          contact_name: form.contactName,
+          email: form.email,
+          phone: form.phone,
+          category: form.category,
+          joined_at: new Date().toISOString().slice(0, 10),
+        }])
 
       if (insertError) {
-        console.error("Error al insertar:", insertError.message)
-        alert("Hubo un error al registrar el negocio: " + insertError.message)
+        alert("Error al registrar: " + insertError.message)
         setSubmitting(false)
         return
       }
 
       // 4. Éxito
-      const partner: Partner = {
+      onSuccess({
         id: partnerId,
         businessName: form.businessName,
         contactName: form.contactName,
@@ -325,11 +322,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         phone: form.phone,
         category: form.category,
         joinedAt: new Date().toISOString().slice(0, 10),
-      }
-      onSuccess(partner)
+      })
 
     } catch (err) {
-      console.error("Error inesperado:", err)
+      console.error(err)
       setSubmitting(false)
     }
   }
