@@ -3,11 +3,11 @@ import logoImg from './imports/LOGO_DETAILING_SPECIALIST.png'
 import type { Partner, ClientReferral } from './lib/types'
 import { C, COMMISSION_BY_SERVICE, CATEGORY_LABELS } from './lib/constants'
 import { isSupabaseConfigured } from './lib/supabaseClient'
-import { fetchPartners, fetchReferrals, insertPartner, insertReferral } from './lib/db'
+import { fetchPartners, fetchReferrals, insertPartner, insertReferral, recordTermsAcceptance } from './lib/db'
 import ClientForm from './ClientForm'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-type Screen = 'landing' | 'success' | 'dashboard' | 'client' | 'terms'  
+type Screen = 'landing' | 'success' | 'dashboard' | 'client'
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
 const SEED_PARTNERS: Partner[] = [
@@ -125,7 +125,7 @@ function QRSvg({ fill = '#060e1e', size = 168 }: { fill?: string; size?: number 
 }
 
 // ─── Partner Landing / Registration ──────────────────────────────────────────
-function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => void; onNavigate: (s: Screen) => void }) {
+function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
   const [form, setForm] = useState({ businessName: '', contactName: '', email: '', phone: '', category: '', terms: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -136,23 +136,21 @@ function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => voi
     if (!form.contactName.trim()) e.contactName = 'Required'
     if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Valid email required'
     if (!form.phone.trim()) e.phone = 'Required'
+    else if (form.phone.replace(/\D/g, '').length < 7) e.phone = 'Enter a valid phone number (digits only)'
     if (!form.category) e.category = 'Select a category'
     if (!form.terms) e.terms = 'Must accept terms'
     return e
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     setSubmitting(true)
-
-    try {
+    setTimeout(() => {
       const slug = form.businessName.replace(/\s+/g, '').toUpperCase().slice(0, 6)
-      const partnerId = `MH-${slug}-26`
-      
-      const newPartner: Partner = {
-        id: partnerId,
+      const partner: Partner = {
+        id: `MH-${slug}-26`,
         businessName: form.businessName,
         contactName: form.contactName,
         email: form.email,
@@ -160,34 +158,8 @@ function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => voi
         category: form.category,
         joinedAt: new Date().toISOString().slice(0, 10),
       }
-
-      // 1. Insertar el socio usando tu función de base de datos (o directamente con supabase)
-      await insertPartner(newPartner)
-
-      // 2. Registrar la aceptación rápida de los términos en la nueva tabla
-      const { error: termsError } = await isSupabaseConfigured() ? (
-        await import('./lib/supabaseClient').then(async ({ supabase }) => {
-          return await supabase
-            .from('partner_terms_acceptances')
-            .insert([{
-              partner_id: partnerId,
-              terms_version: 'PARTNER_TERMS_V1.0',
-              accepted: true,
-              source: 'partner_landing_quick'
-            }])
-        })
-      ) : { error: null }
-
-      if (termsError) throw termsError
-
-      setSubmitting(false)
-      onSuccess(newPartner)
-
-    } catch (error) {
-      console.error("Error al registrar el socio y los términos:", error)
-      setSubmitting(false)
-      alert("Hubo un error al procesar tu registro. Por favor, intenta de nuevo.")
-    }
+      onSuccess(partner)
+    }, 1400)
   }
 
   const inp = (k: string) => ({
@@ -304,7 +276,7 @@ function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => voi
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <div>
                 {label('Phone')}
-                <input {...inp('phone')} type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+1 (305) 000-0000" />
+                <input {...inp('phone')} type="tel" inputMode="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/[^\d+\-\s()]/g, '') }))} placeholder="+1 (305) 000-0000" />
                 {errors.phone && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '4px' }}>{errors.phone}</p>}
               </div>
               <div>
@@ -340,15 +312,18 @@ function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => voi
                     </svg>}
                   </div>
                 </div>
-               <span style={{ fontSize: '12px', color: C.silverD, lineHeight: 1.65 }}>
+                <span style={{ fontSize: '12px', color: C.silverD, lineHeight: 1.65 }}>
                   I accept the{' '}
-                  <span 
-                    onClick={() => onNavigate('terms')} 
-                    style={{ color: C.gold, cursor: 'pointer', textDecoration: 'underline' }}
+                  <a
+                    href="https://www.magichandscarwash.com/b2b"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    style={{ color: C.gold, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}
                   >
-                    Terms & Conditions
-                  </span>
-                  . I understand that the 10% commission is released exclusively upon completion and full payment of the referred service.
+                    Terms &amp; Conditions
+                  </a>.
+                  I understand that the 10% commission is released exclusively upon completion and full payment of the referred service.
                 </span>
               </label>
               {errors.terms && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '8px' }}>{errors.terms}</p>}
@@ -786,7 +761,9 @@ export default function App() {
     setPartners(prev => [p, ...prev])
     setCurrentPartner(p)
     setScreen('success')
-    insertPartner(p).catch(err => console.error('Failed to save partner:', err))
+    insertPartner(p)
+      .then(() => recordTermsAcceptance(p.id))
+      .catch(err => console.error('Failed to save partner / terms acceptance:', err))
   }
 
   const handleClientReferral = (ref: ClientReferral) => {
