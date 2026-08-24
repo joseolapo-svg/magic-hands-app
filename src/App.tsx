@@ -183,36 +183,41 @@ function Nav({
         backdropFilter: "blur(14px)",
       }}
     >
-      <Logo />
+     <Logo />
       <div style={{ display: "flex", gap: "8px" }}>
         {[
           { label: "Partnership", s: "landing" as Screen },
           { label: "Client Referral", s: "client" as Screen },
-        ].map(({ label, s }) => (
-          <button
-            disabled={isDisabled}
-            key={s}
-            onClick={() => onNavigate(s)}
-            style={{
-              padding: "7px 18px",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              fontFamily: "Montserrat, sans-serif",
-              background: screen === s ? `${C.gold}22` : "transparent",
-              color: screen === s ? C.gold : C.silverD,
-              borderBottom:
-                screen === s ? `2px solid ${C.gold}` : "2px solid transparent",
-              transition: "all 0.15s",
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        ].map(({ label, s }) => {
+          const isDisabled = s === "client";
+
+          return (
+            <button
+              disabled={isDisabled}
+              key={s}
+              onClick={() => !isDisabled && onNavigate(s)}
+              style={{
+                padding: "7px 18px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: isDisabled ? "not-allowed" : "pointer",
+                fontSize: "12px",
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                fontFamily: "Montserrat, sans-serif",
+                background: screen === s ? `${C.gold}22` : "transparent",
+                color: isDisabled ? `${C.silverD}55` : (screen === s ? C.gold : C.silverD),
+                borderBottom:
+                  screen === s ? `2px solid ${C.gold}` : "2px solid transparent",
+                opacity: isDisabled ? 0.4 : 1,
+                transition: "all 0.15s",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
     </nav>
   )
