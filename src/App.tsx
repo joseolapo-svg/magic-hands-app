@@ -125,7 +125,7 @@ function QRSvg({ fill = '#060e1e', size = 168 }: { fill?: string; size?: number 
 }
 
 // ─── Partner Landing / Registration ──────────────────────────────────────────
-function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
+function LandingPage({ onSuccess, onNavigate }: { onSuccess: (p: Partner) => void; onNavigate: (s: Screen) => void }) {
   const [form, setForm] = useState({ businessName: '', contactName: '', email: '', phone: '', category: '', terms: false })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -340,9 +340,15 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                     </svg>}
                   </div>
                 </div>
-                <span style={{ fontSize: '12px', color: C.silverD, lineHeight: 1.65 }}>
-                  I accept the <span style={{ color: C.gold, cursor: 'pointer' }}>Terms & Conditions</span>.
-                  I understand that the 10% commission is released exclusively upon completion and full payment of the referred service.
+               <span style={{ fontSize: '12px', color: C.silverD, lineHeight: 1.65 }}>
+                  I accept the{' '}
+                  <span 
+                    onClick={() => onNavigate('terms')} 
+                    style={{ color: C.gold, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Terms & Conditions
+                  </span>
+                  . I understand that the 10% commission is released exclusively upon completion and full payment of the referred service.
                 </span>
               </label>
               {errors.terms && <p style={{ fontSize: '11px', color: '#f87171', marginTop: '8px' }}>{errors.terms}</p>}
