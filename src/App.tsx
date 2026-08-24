@@ -769,8 +769,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                   >
                     Terms &amp; Conditions
                   </a>
-                  . I understand that the 10% commission is released exclusively
-                  upon completion and full payment of the referred service.
+                  . Al enviar este formulario, acepto recibir mensajes de texto (SMS) promocionales e informativos de Magic Hands. Puedo cancelar enviando STOP.
                 </span>
               </label>
               {errors.terms && (
