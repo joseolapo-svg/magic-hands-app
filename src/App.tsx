@@ -274,7 +274,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true)
 
     try {
-      // 1. Verificamos si el negocio ya existe en Supabase (sin declarar variables muertas)
+      // 1. Verificamos si el negocio ya existe en Supabase
       const { data: existingPartner } = await supabase
         .from('partners')
         .select('id')
