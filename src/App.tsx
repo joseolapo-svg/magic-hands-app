@@ -274,21 +274,11 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true);
 
     try {
-      const { data: existing } = await supabase
-        .from('partners')
-        .select('id')
-        .eq('business_name', form.businessName)
-        .maybeSingle();
-
-      if (existing) {
-        alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.");
-        setSubmitting(false);
-        return;
-      }
-
+      // Generamos el ID único del socio
       const slug = form.businessName.replace(/\s+/g, "").toUpperCase().slice(0, 6);
       const partnerId = `MH-${slug}-26`;
 
+      // Enviamos el registro directamente a Supabase
       const { error: insertError } = await supabase.from('partners').insert({
         id: partnerId,
         business_name: form.businessName,
@@ -305,6 +295,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         return;
       }
 
+      // Éxito
       onSuccess({
         id: partnerId,
         businessName: form.businessName,
