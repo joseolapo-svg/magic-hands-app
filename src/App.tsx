@@ -263,7 +263,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
     return e
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) {
@@ -273,27 +273,66 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
 
     setSubmitting(true)
 
-    // 1. Verificamos si el nombre del negocio ya existe en la base de datos
-    const { data: existingPartner, error: checkError } = await supabase
-      .from('partners')
-      .select('id')
-      .eq('business_name', form.businessName)
-      .maybeSingle()
+    try {
+      // 1. Verificamos si el nombre del negocio ya existe
+      const { data: existingPartner, error: checkError } = await supabase
+        .from('partners')
+        .select('id')
+        .eq('business_name', form.businessName)
+        .maybeSingle()
 
-    if (existingPartner) {
-      alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.")
-      setSubmitting(false)
-      return
-    }
+      if (existingPartner) {
+        alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.")
+        setSubmitting(false)
+        return
+      }
 
-    // 2. Si no existe, procedemos con la simulación y creación del socio
-    setTimeout(() => {
+      // 2. Generamos el ID único del socio
       const slug = form.businessName
         .replace(/\s+/g, "")
         .toUpperCase()
         .slice(0, 6)
+      const partnerId = `MH-${slug}-26`
+
+      // 3. Insertamos el nuevo socio en la tabla de Supabase
+      const { error: insertError } = await supabase
+        .from('partners')
+        .insert([
+          {
+            id: partnerId,
+            business_name: form.businessName,
+            contact_name: form.contactName,
+            email: form.email,
+            phone: form.phone,
+            category: form.category,
+            joined_at: new Date().toISOString().slice(0, 10),
+          }
+        ])
+
+      if (insertError) {
+        console.error("Error al insertar:", insertError.message)
+        alert("Hubo un error al registrar el negocio: " + insertError.message)
+        setSubmitting(false)
+        return
+      }
+
+      // 4. Si todo sale bien, pasamos a la pantalla de éxito
       const partner: Partner = {
-        id: `MH-${slug}-26`,
+        id: partnerId,
+        businessName: form.businessName,
+        contactName: form.contactName,
+        email: form.email,
+        phone: form.phone,
+        category: form.category,
+        joinedAt: new Date().toISOString().slice(0, 10),
+      }
+      onSuccess(partner)
+
+    } catch (err) {
+      console.error("Error inesperado:", err)
+      setSubmitting(false)
+    }
+  }
         businessName: form.businessName,
         contactName: form.contactName,
         email: form.email,
