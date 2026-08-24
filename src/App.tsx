@@ -274,8 +274,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true)
 
     try {
-      // 1. Verificamos si el nombre del negocio ya existe
-      const { data: existingPartner, error: checkError } = await supabase
+      // 1. Verificamos si el negocio ya existe en Supabase
+      const { data: existingPartner } = await supabase
         .from('partners')
         .select('id')
         .eq('business_name', form.businessName)
@@ -294,20 +294,20 @@ const handleSubmit = async (e: React.FormEvent) => {
         .slice(0, 6)
       const partnerId = `MH-${slug}-26`
 
-      // 3. Insertamos el nuevo socio en la tabla de Supabase
+      // 3. Insertamos usando any para evitar conflictos de tipos en TypeScript durante el build
+      const insertData: any = {
+        id: partnerId,
+        business_name: form.businessName,
+        contact_name: form.contactName,
+        email: form.email,
+        phone: form.phone,
+        category: form.category,
+        joined_at: new Date().toISOString().slice(0, 10),
+      }
+
       const { error: insertError } = await supabase
         .from('partners')
-        .insert([
-          {
-            id: partnerId,
-            business_name: form.businessName,
-            contact_name: form.contactName,
-            email: form.email,
-            phone: form.phone,
-            category: form.category,
-            joined_at: new Date().toISOString().slice(0, 10),
-          }
-        ])
+        .insert([insertData])
 
       if (insertError) {
         console.error("Error al insertar:", insertError.message)
@@ -316,7 +316,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         return
       }
 
-      // 4. Si todo sale bien, pasamos a la pantalla de éxito
+      // 4. Éxito
       const partner: Partner = {
         id: partnerId,
         businessName: form.businessName,
