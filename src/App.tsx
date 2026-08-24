@@ -7,7 +7,7 @@ import { fetchPartners, fetchReferrals, insertPartner, insertReferral } from './
 import ClientForm from './ClientForm'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-type Screen = 'landing' | 'success' | 'dashboard' | 'client'
+type Screen = 'landing' | 'success' | 'dashboard' | 'client' | 'terms'  // <-- Añade '| 'terms'' aquí
 
 // ─── Seed data ───────────────────────────────────────────────────────────────
 const SEED_PARTNERS: Partner[] = [
