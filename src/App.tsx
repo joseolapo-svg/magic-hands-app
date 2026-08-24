@@ -190,6 +190,7 @@ function Nav({
           { label: "Client Referral", s: "client" as Screen },
         ].map(({ label, s }) => (
           <button
+            disabled={isDisabled}
             key={s}
             onClick={() => onNavigate(s)}
             style={{
