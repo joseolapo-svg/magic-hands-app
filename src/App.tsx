@@ -322,7 +322,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                     style={{ color: C.gold, cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}
                   >
                     Terms &amp; Conditions
-                  </a>.
+                  </a>
                   I understand that the 10% commission is released exclusively upon completion and full payment of the referred service.
                 </span>
               </label>
