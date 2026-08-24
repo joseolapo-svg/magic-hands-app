@@ -141,15 +141,18 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
     return e
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     setSubmitting(true)
-    setTimeout(() => {
+
+    try {
       const slug = form.businessName.replace(/\s+/g, '').toUpperCase().slice(0, 6)
-      const partner: Partner = {
-        id: `MH-${slug}-26`,
+      const partnerId = `MH-${slug}-26`
+      
+      const newPartner: Partner = {
+        id: partnerId,
         businessName: form.businessName,
         contactName: form.contactName,
         email: form.email,
@@ -157,8 +160,34 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
         category: form.category,
         joinedAt: new Date().toISOString().slice(0, 10),
       }
-      onSuccess(partner)
-    }, 1400)
+
+      // 1. Insertar el socio usando tu función de base de datos (o directamente con supabase)
+      await insertPartner(newPartner)
+
+      // 2. Registrar la aceptación rápida de los términos en la nueva tabla
+      const { error: termsError } = await isSupabaseConfigured() ? (
+        await import('./lib/supabaseClient').then(async ({ supabase }) => {
+          return await supabase
+            .from('partner_terms_acceptances')
+            .insert([{
+              partner_id: partnerId,
+              terms_version: 'PARTNER_TERMS_V1.0',
+              accepted: true,
+              source: 'partner_landing_quick'
+            }])
+        })
+      ) : { error: null }
+
+      if (termsError) throw termsError
+
+      setSubmitting(false)
+      onSuccess(newPartner)
+
+    } catch (error) {
+      console.error("Error al registrar el socio y los términos:", error)
+      setSubmitting(false)
+      alert("Hubo un error al procesar tu registro. Por favor, intenta de nuevo.")
+    }
   }
 
   const inp = (k: string) => ({
