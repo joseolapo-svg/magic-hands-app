@@ -274,38 +274,33 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true)
 
     try {
-      // 1. Verificamos si el negocio ya existe en Supabase
-      const { data: existingPartner } = await supabase
+      // 1. Verificar duplicados por nombre de negocio
+      const { data: existing } = await supabase
         .from('partners')
         .select('id')
         .eq('business_name', form.businessName)
         .maybeSingle()
 
-      if (existingPartner) {
+      if (existing) {
         alert("Este nombre de negocio ya está registrado. Por favor, utiliza uno diferente.")
         setSubmitting(false)
         return
       }
 
-      // 2. Generamos el ID único del socio
-      const slug = form.businessName
-        .replace(/\s+/g, "")
-        .toUpperCase()
-        .slice(0, 6)
+      // 2. Generar ID único
+      const slug = form.businessName.replace(/\s+/g, "").toUpperCase().slice(0, 6)
       const partnerId = `MH-${slug}-26`
 
-      // 3. Insertamos el registro
-      const { error: insertError } = await supabase
-        .from('partners')
-        .insert([{
-          id: partnerId,
-          business_name: form.businessName,
-          contact_name: form.contactName,
-          email: form.email,
-          phone: form.phone,
-          category: form.category,
-          joined_at: new Date().toISOString().slice(0, 10),
-        }])
+      // 3. Insertar en Supabase
+      const { error: insertError } = await supabase.from('partners').insert({
+        id: partnerId,
+        business_name: form.businessName,
+        contact_name: form.contactName,
+        email: form.email,
+        phone: form.phone,
+        category: form.category,
+        joined_at: new Date().toISOString().slice(0, 10),
+      })
 
       if (insertError) {
         alert("Error al registrar: " + insertError.message)
@@ -323,7 +318,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         category: form.category,
         joinedAt: new Date().toISOString().slice(0, 10),
       })
-
     } catch (err) {
       console.error(err)
       setSubmitting(false)
