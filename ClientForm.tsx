@@ -106,6 +106,7 @@ export default function ClientForm() {
 
       <button 
         type="submit" 
+        disabled={true}
         className="w-full py-2 bg-amber-500 hover:bg-amber-600 font-bold rounded text-slate-950 transition-colors"
       >
         Guardar Referido
