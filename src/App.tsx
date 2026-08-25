@@ -248,6 +248,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false) // ← Estado para controlar el pop-up
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -755,20 +756,26 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                   }}
                 >
                   I accept the{" "}
-                  <a
-                    href="https://www.magichandscarwash.com/b2b"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowTermsModal(true)
+                    }}
                     style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
                       color: C.gold,
                       cursor: "pointer",
                       textDecoration: "underline",
                       fontWeight: 600,
+                      fontFamily: "inherit",
+                      fontSize: "inherit",
                     }}
                   >
                     Terms &amp; Conditions
-                  </a>
+                  </button>
                   . By submitting this form, I agree to receive promotional and informational text messages (SMS) from Magic Hands. I can opt out by sending STOP.
                 </span>
               </label>
@@ -814,10 +821,132 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
           </form>
         </div>
       </div>
+
+      {/* Pop-up Modal: Terms & Conditions */}
+      {showTermsModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "rgba(6, 14, 30, 0.85)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            style={{
+              background: C.navy800,
+              border: `1px solid ${C.gold}44`,
+              borderRadius: "16px",
+              maxWidth: "600px",
+              width: "100%",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: `0 0 50px ${C.gold}1a`,
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "20px 24px",
+                borderBottom: `1px solid ${C.gold}22`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: C.navy,
+              }}
+            >
+              <h3 style={{ color: C.white, fontSize: "16px", fontWeight: 700, margin: 0 }}>
+                General Terms and Conditions for Partners
+              </h3>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: C.silverD,
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div
+              style={{
+                padding: "24px",
+                overflowY: "auto",
+                color: C.silverD,
+                fontSize: "13px",
+                lineHeight: 1.6,
+              }}
+            >
+              <h4 style={{ color: C.gold, marginTop: 0 }}>1. Program Overview</h4>
+              <p>
+                By registering as a Magic Hands B2B Partner, you agree to refer prospective clients for professional automotive and nautical detailing services.
+              </p>
+              
+              <h4 style={{ color: C.gold }}>2. Commission Structure</h4>
+              <p>
+                Partners earn a 10% commission on all completed services generated through their designated partner QR code or unique referral link. Commissions are calculated based on the net service value before taxes.
+              </p>
+
+              <h4 style={{ color: C.gold }}>3. Payout Terms</h4>
+              <p>
+                Commission payouts are processed within 48 hours following the completion and full payment of the client’s detailing service.
+              </p>
+
+              <h4 style={{ color: C.gold }}>4. SMS Opt-In & Communications</h4>
+              <p>
+                By accepting these terms, you consent to receive program updates, status notifications, and promotional messages via SMS from Magic Hands. Reply STOP at any time to opt out.
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: `1px solid ${C.gold}22`,
+                textAlign: "right",
+                background: C.navy,
+              }}
+            >
+              <button
+                onClick={() => {
+                  setForm((p) => ({ ...p, terms: true }))
+                  setShowTermsModal(false)
+                }}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
+                  color: C.navy,
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Accept &amp; Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
 // ─── Success / QR Kit Screen ──────────────────────────────────────────────────
 function SuccessScreen({
   partner,
