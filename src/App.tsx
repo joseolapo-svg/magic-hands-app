@@ -223,7 +223,7 @@ function Nav({
   )
 }
 
-// ─── QR SVG (21×21 static pattern) ──────────────────────────────────────────
+// ─── QR SVG ─────────────────────────────────────────────────────────────────
 function QRSvg({ size = 168 }: { size?: number }) {
   return (
     <img
@@ -862,9 +862,9 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
               background: C.navy800,
               border: `1px solid ${C.gold}44`,
               borderRadius: "16px",
-              maxWidth: "600px",
+              maxWidth: "650px",
               width: "100%",
-              maxHeight: "80vh",
+              maxHeight: "85vh",
               display: "flex",
               flexDirection: "column",
               boxShadow: `0 0 50px ${C.gold}1a`,
@@ -909,27 +909,45 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                 color: C.silverD,
                 fontSize: "13px",
                 lineHeight: 1.6,
+                flexGrow: 1,
               }}
             >
-              <h4 style={{ color: C.gold, marginTop: 0 }}>1. Program Overview</h4>
-              <p>
-                By registering as a Magic Hands B2B Partner, you agree to refer prospective clients for professional automotive and nautical detailing services.
-              </p>
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ color: C.gold, marginTop: 0, fontSize: "15px", marginBottom: "6px" }}>1. Program Overview</h4>
+                <p style={{ margin: 0 }}>
+                  By registering as a Magic Hands B2B Partner, you agree to refer prospective clients for professional automotive and nautical detailing services.
+                </p>
+              </div>
               
-              <h4 style={{ color: C.gold }}>2. Commission Structure</h4>
-              <p>
-                Partners earn a 10% commission on all completed services generated through their designated partner QR code or unique referral link. Commissions are calculated based on the net service value before taxes.
-              </p>
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "6px" }}>2. Commission Structure</h4>
+                <p style={{ margin: 0 }}>
+                  Partners earn a 10% commission on all completed services generated through their designated partner QR code or unique referral link. Commissions are calculated based on the net service value before taxes.
+                </p>
+              </div>
 
-              <h4 style={{ color: C.gold }}>3. Payout Terms</h4>
-              <p>
-                Commission payouts are processed within 48 hours following the completion and full payment of the client’s detailing service.
-              </p>
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "6px" }}>3. Payout Terms</h4>
+                <p style={{ margin: 0 }}>
+                  Commission payouts are processed within 48 hours following the completion and full payment of the client’s detailing service.
+                </p>
+              </div>
 
-              <h4 style={{ color: C.gold }}>4. SMS Opt-In & Communications</h4>
-              <p>
-              Consent & Purpose: By registering as a Partner and providing your mobile phone number, you explicitly consent to receive transactional, operational, and promotional SMS notifications from Magic Hands.
-Rates & Frequency: Message frequency varies based on account activity. Message and data rates may apply.
+              <div style={{ marginBottom: 0 }}>
+                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "8px" }}>4. SMS Communication Terms & Conditions</h4>
+                <p style={{ margin: "0 0 10px 0" }}>
+                  <strong style={{ color: C.white }}>Consent & Purpose:</strong> By registering as a Partner and providing your mobile phone number, you explicitly consent to receive transactional, operational, and promotional SMS notifications from Magic Hands.
+                </p>
+                <p style={{ margin: "0 0 10px 0" }}>
+                  <strong style={{ color: C.white }}>Rates & Frequency:</strong> Message frequency varies based on account activity. Message and data rates may apply.
+                </p>
+                <p style={{ margin: "0 0 10px 0" }}>
+                  <strong style={{ color: C.white }}>Opt-Out Policy:</strong> You may opt out at any time by replying STOP. Reply HELP for assistance or contact support.
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: C.white }}>Privacy Guarantee:</strong> No mobile information will be shared, sold, or rented to third parties or affiliates for marketing or promotional purposes under any circumstances.
+                </p>
+              </div>
             </div>
 
             {/* Modal Footer */}
@@ -947,13 +965,13 @@ Rates & Frequency: Message frequency varies based on account activity. Message a
                   setShowTermsModal(false)
                 }}
                 style={{
-                  padding: "10px 20px",
+                  padding: "10px 24px",
                   borderRadius: "6px",
                   border: "none",
                   background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
                   color: C.navy,
                   fontWeight: 700,
-                  fontSize: "12px",
+                  fontSize: "13px",
                   cursor: "pointer",
                 }}
               >
