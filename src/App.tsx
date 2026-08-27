@@ -248,7 +248,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
-  const [showTermsModal, setShowTermsModal] = useState(false) // ← Estado para controlar el pop-up
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -345,7 +345,6 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
           textAlign: "center",
         }}
       >
-        {/* Radial golds */}
         <div
           style={{
             position: "absolute",
@@ -755,43 +754,48 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                     lineHeight: 1.65,
                   }}
                 >
-                 <span>
-  I agree to receive marketing text messages from Magic Hands. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help.{" "}
-  <button
-    type="button"
-    onClick={(e) => {
-      e.stopPropagation()
-      setShowTermsModal(true)
-    }}
-    style={{
-      background: "none",
-      border: "none",
-      padding: 0,
-      color: C.gold,
-      cursor: "pointer",
-      textDecoration: "underline",
-      fontWeight: 600,
-      fontFamily: "inherit",
-      fontSize: "inherit",
-    }}
-  >
- >
-  I accept the{" "}
-     <a
-       href="https://www.magichandscarwash.com/b2b"
-      target="_blank"
-         rel="noopener noreferrer"
-           onClick={(e) => e.stopPropagation()}
-        style={{
-        color: C.gold,
-       cursor: "pointer",
-      textDecoration: "underline",
-      fontWeight: 600,
+                  I agree to receive marketing text messages from Magic Hands. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help.{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowTermsModal(true)
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: C.gold,
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontWeight: 600,
+                      fontFamily: "inherit",
+                      fontSize: "inherit",
                     }}
                   >
-                    Terms &amp; Conditions
-                  </a>
-                  . By submitting this form, I agree to receive promotional and informational text messages (SMS) from Magic Hands. I can opt out by sending STOP.
+                    [Terms &amp; Conditions]
+                  </button>
+                  {" | "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowTermsModal(true)
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: C.gold,
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontWeight: 600,
+                      fontFamily: "inherit",
+                      fontSize: "inherit",
+                    }}
+                  >
+                    [Privacy Policy]
+                  </button>
                 </span>
               </label>
               {errors.terms && (
@@ -962,6 +966,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
     </div>
   )
 }
+
 // ─── Success / QR Kit Screen ──────────────────────────────────────────────────
 function SuccessScreen({
   partner,
@@ -983,25 +988,20 @@ function SuccessScreen({
     canvas.width = W
     canvas.height = H
 
-    // Dark background
     ctx.fillStyle = "#060e1e"
     ctx.fillRect(0, 0, W, H)
 
-    // Gold border
     ctx.strokeStyle = C.gold
     ctx.lineWidth = 3
     ctx.strokeRect(4, 4, W - 8, H - 8)
 
-    // Header strip
     ctx.fillStyle = "#0c1a30"
     ctx.fillRect(4, 4, W - 8, 90)
 
-    // Load & draw logo, then rest of canvas
     const logoEl = new Image()
     logoEl.onload = () => {
       ctx.drawImage(logoEl, 20, 14, 64, 64)
 
-      // Brand text next to logo
       ctx.fillStyle = "#FFFFFF"
       ctx.font = "bold 18px Montserrat, sans-serif"
       ctx.textAlign = "left"
@@ -1010,7 +1010,6 @@ function SuccessScreen({
       ctx.font = "600 11px Montserrat, sans-serif"
       ctx.fillText("DETAILING SPECIALISTS · MIAMI", 96, 62)
 
-      // Partner ID badge top-right
       ctx.fillStyle = `${C.gold}22`
       ctx.beginPath()
       ctx.roundRect(W - 160, 26, 144, 36, 6)
@@ -1020,7 +1019,6 @@ function SuccessScreen({
       ctx.textAlign = "center"
       ctx.fillText(partner.id, W - 88, 48)
 
-      // QR area white background
       const qrPad = 20,
         qrSize = W - 80,
         qrTop = 110
@@ -1029,7 +1027,6 @@ function SuccessScreen({
       ctx.roundRect(40, qrTop, qrSize, qrSize, 10)
       ctx.fill()
 
-      // Bottom text
       const textTop = qrTop + qrSize + 24
       ctx.fillStyle = C.white
       ctx.font = "bold 13px Montserrat, sans-serif"
@@ -1043,7 +1040,6 @@ function SuccessScreen({
         textTop + 22,
       )
 
-      // Gold divider line
       ctx.strokeStyle = `${C.gold}55`
       ctx.lineWidth = 1
       ctx.beginPath()
@@ -1051,7 +1047,6 @@ function SuccessScreen({
       ctx.lineTo(W - 40, textTop - 14)
       ctx.stroke()
 
-      // Draw the real QR code image, then export the PNG once it loads
       const qrEl = new Image()
       qrEl.onload = () => {
         const inner = qrSize - qrPad * 2
@@ -1119,7 +1114,6 @@ function SuccessScreen({
           textAlign: "center",
         }}
       >
-        {/* Badge */}
         <div
           style={{
             width: "72px",
@@ -1172,7 +1166,6 @@ function SuccessScreen({
           automatically linked to your business in our system.
         </p>
 
-        {/* QR Kit card */}
         <div
           style={{
             background: C.navy800,
@@ -1305,7 +1298,6 @@ function SuccessScreen({
               </button>
             </div>
 
-            {/* QR visual */}
             <div
               style={{
                 display: "flex",
@@ -1339,7 +1331,6 @@ function SuccessScreen({
           </div>
         </div>
 
-        {/* Partner info tiles */}
         <div
           style={{
             display: "grid",
@@ -1521,7 +1512,6 @@ function Dashboard({
           </p>
         </div>
 
-        {/* KPIs */}
         <div
           style={{
             display: "grid",
@@ -1614,7 +1604,6 @@ function Dashboard({
           ))}
         </div>
 
-        {/* Table */}
         <div
           style={{
             background: C.navy800,
@@ -1667,7 +1656,6 @@ function Dashboard({
             </div>
           </div>
 
-          {/* Col headers */}
           <div
             style={{
               display: "grid",
