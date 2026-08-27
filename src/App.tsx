@@ -755,29 +755,50 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                     lineHeight: 1.65,
                   }}
                 >
-                  I accept the{" "}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowTermsModal(true)
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: C.gold,
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontWeight: 600,
-                      fontFamily: "inherit",
-                      fontSize: "inherit",
-                    }}
-                  >
-                    Terms &amp; Conditions
-                  </button>
-                  .I agree to receive marketing text messages from Magic Hands. Message & data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help. [Terms & Conditions] | [Privacy Policy]
-                </span>
+                 <span>
+  I agree to receive marketing text messages from Magic Hands. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help.{" "}
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation()
+      setShowTermsModal(true)
+    }}
+    style={{
+      background: "none",
+      border: "none",
+      padding: 0,
+      color: C.gold,
+      cursor: "pointer",
+      textDecoration: "underline",
+      fontWeight: 600,
+      fontFamily: "inherit",
+      fontSize: "inherit",
+    }}
+  >
+    Terms &amp; Conditions
+  </button>
+  {" | "}
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation()
+      setShowPrivacyModal(true) // O la función que abra tu modal/link de privacidad
+    }}
+    style={{
+      background: "none",
+      border: "none",
+      padding: 0,
+      color: C.gold,
+      cursor: "pointer",
+      textDecoration: "underline",
+      fontWeight: 600,
+      fontFamily: "inherit",
+      fontSize: "inherit",
+    }}
+  >
+    Privacy Policy
+  </button>
+</span>
               </label>
               {errors.terms && (
                 <p
