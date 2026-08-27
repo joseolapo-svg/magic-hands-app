@@ -928,8 +928,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
 
               <h4 style={{ color: C.gold }}>4. SMS Opt-In & Communications</h4>
               <p>
-                By accepting these terms, you consent to receive program updates, status notifications, and promotional messages via SMS from Magic Hands. Reply STOP at any time to opt out.
-              </p>
+               By accepting these terms, you consent to receive program updates, status notifications, and marketing messages via SMS from Magic Hands. Message frequency varies. Message and data rates may apply. Reply STOP to cancel or HELP for help.
             </div>
 
             {/* Modal Footer */}
