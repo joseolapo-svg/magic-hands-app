@@ -776,7 +776,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
                   >
                     Terms &amp; Conditions
                   </button>
-                  . By submitting this form, I agree to receive promotional and informational text messages (SMS) from Magic Hands. I can opt out by sending STOP.
+                  .I agree to receive marketing text messages from Magic Hands. Message & data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help. [Terms & Conditions] | [Privacy Policy]
                 </span>
               </label>
               {errors.terms && (
