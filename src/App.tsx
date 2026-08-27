@@ -928,7 +928,13 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
 
               <h4 style={{ color: C.gold }}>4. SMS Opt-In & Communications</h4>
               <p>
-               By accepting these terms, you consent to receive program updates, status notifications, and marketing messages via SMS from Magic Hands. Message frequency varies. Message and data rates may apply. Reply STOP to cancel or HELP for help.
+              Consent & Purpose: By registering as a Partner and providing your mobile phone number, you explicitly consent to receive transactional, operational, and promotional SMS notifications from Magic Hands.
+
+Rates & Frequency: Message frequency varies based on account activity. Message and data rates may apply.
+
+Opt-Out Policy: You may opt out at any time by replying STOP. Reply HELP for assistance or contact support.
+
+Privacy Guarantee: No mobile information will be shared, sold, or rented to third parties or affiliates for marketing or promotional purposes under any circumstances.
             </div>
 
             {/* Modal Footer */}
