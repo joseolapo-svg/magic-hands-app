@@ -775,30 +775,24 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
       fontSize: "inherit",
     }}
   >
-    Terms &amp; Conditions
-  </button>
-  {" | "}
-  <button
-    type="button"
-    onClick={(e) => {
-      e.stopPropagation()
-      setShowPrivacyModal(true) // O la función que abra tu modal/link de privacidad
-    }}
-    style={{
-      background: "none",
-      border: "none",
-      padding: 0,
-      color: C.gold,
-      cursor: "pointer",
+ >
+  I accept the{" "}
+     <a
+       href="https://www.magichandscarwash.com/b2b"
+      target="_blank"
+         rel="noopener noreferrer"
+           onClick={(e) => e.stopPropagation()}
+        style={{
+        color: C.gold,
+       cursor: "pointer",
       textDecoration: "underline",
       fontWeight: 600,
-      fontFamily: "inherit",
-      fontSize: "inherit",
-    }}
-  >
-    Privacy Policy
-  </button>
-</span>
+                    }}
+                  >
+                    Terms &amp; Conditions
+                  </a>
+                  . By submitting this form, I agree to receive promotional and informational text messages (SMS) from Magic Hands. I can opt out by sending STOP.
+                </span>
               </label>
               {errors.terms && (
                 <p
