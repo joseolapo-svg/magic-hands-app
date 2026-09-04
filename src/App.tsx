@@ -1934,9 +1934,7 @@ export default function App() {
         <ClientForm partners={partners} onSubmit={handleClientReferral} />
       )}
     </div>
-  )
-}
-<footer class="site-footer">
+    <footer class="site-footer">
     <div class="footer-content">
         <p>© 2026 Magic Hands Detailing Specialists. A service operated by MOTELSGROUP, LLC.</p>
     </div>
@@ -1958,3 +1956,6 @@ export default function App() {
         letter-spacing: 0.5px;
     }
 </style>
+
+  )
+}
