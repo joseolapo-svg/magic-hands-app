@@ -1909,47 +1909,47 @@ export default function App() {
   const activeDashboardPartner = currentPartner ?? SEED_PARTNERS[0]
 
   return (
-    <div style={{ minHeight: "100vh", background: C.navy }}>
-      {(screen === "landing" || screen === "client") && (
-        <Nav screen={screen} onNavigate={setScreen} />
-      )}
+    <>
+      <div style={{ minHeight: "100vh", background: C.navy, display: "flex", flexDirection: "column" }}>
+        {(screen === "landing" || screen === "client") && (
+          <Nav screen={screen} onNavigate={setScreen} />
+        )}
 
-      {screen === "landing" && <LandingPage onSuccess={handlePartnerSuccess} />}
-      {screen === "success" && currentPartner && (
-        <SuccessScreen
-          partner={currentPartner}
-          onDashboard={() => setScreen("dashboard")}
-        />
-      )}
-      {screen === "dashboard" && (
-        <>
-          <Dashboard
-            partner={activeDashboardPartner}
-            allPartners={partners}
-            referrals={referrals}
+        {screen === "landing" && <LandingPage onSuccess={handlePartnerSuccess} />}
+        {screen === "success" && currentPartner && (
+          <SuccessScreen
+            partner={currentPartner}
+            onDashboard={() => setScreen("dashboard")}
           />
-        </>
-      )}
-      {screen === "client" && (
-        <ClientForm partners={partners} onSubmit={handleClientReferral} />
-      )}
-    </div>
-   <footer className="site-footer" style={{
-        backgroundColor: '#111111',
-        color: '#ffffff',
-        textAlign: 'center',
-        padding: '20px 0',
-        fontFamily: 'inherit',
-        fontSize: '14px',
-        borderTop: '1px solid #222222',
-        marginTop: 'auto'
-    }}>
-        <div className="footer-content">
-            <p style={{ margin: 0, letterSpacing: '0.5px' }}>
-                © 2026 Magic Hands Detailing Specialists. A service operated by MOTELSGROUP, LLC.
-            </p>
-        </div>
-    </footer>
-
+        )}
+        {screen === "dashboard" && (
+          <>
+            <Dashboard
+              partner={activeDashboardPartner}
+              allPartners={partners}
+              referrals={referrals}
+            />
+          </>
+        )}
+        {screen === "client" && (
+          <ClientForm partners={partners} onSubmit={handleClientReferral} />
+        )}
+      </div>
+      <footer className="site-footer" style={{
+          backgroundColor: '#111111',
+          color: '#ffffff',
+          textAlign: 'center',
+          padding: '20px 0',
+          fontFamily: 'inherit',
+          fontSize: '14px',
+          borderTop: '1px solid #222222',
+      }}>
+          <div className="footer-content">
+              <p style={{ margin: 0, letterSpacing: '0.5px' }}>
+                  © 2026 Magic Hands Detailing Specialists. A service operated by MOTELSGROUP, LLC.
+              </p>
+          </div>
+      </footer>
+    </>
   )
 }
