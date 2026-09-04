@@ -934,12 +934,12 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
               </div>
 
               <div style={{ marginBottom: 0 }}>
-                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "8px" }}>4. SMS Communication Terms & Conditions</h4>
+                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "8px" }}>4. SMS Communication Terms &amp; Conditions</h4>
                 <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Consent & Purpose:</strong> By registering as a Partner and providing your mobile phone number, you explicitly consent to receive transactional, operational, and promotional SMS notifications from Magic Hands.
+                  <strong style={{ color: C.white }}>Consent &amp; Purpose:</strong> By registering as a Partner and providing your mobile phone number, you explicitly consent to receive recurring marketing, promotional, operational, and transactional SMS messages from Magic Hands, operated by MOTELSGROUP, LLC.
                 </p>
                 <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Rates & Frequency:</strong> Message frequency varies based on account activity. Message and data rates may apply.
+                  <strong style={{ color: C.white }}>Rates &amp; Frequency:</strong> Message frequency varies based on account activity. Message and data rates may apply.
                 </p>
                 <p style={{ margin: "0 0 10px 0" }}>
                   <strong style={{ color: C.white }}>Opt-Out Policy:</strong> You may opt out at any time by replying STOP. Reply HELP for assistance or contact support.
