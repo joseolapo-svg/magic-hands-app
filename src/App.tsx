@@ -1936,3 +1936,25 @@ export default function App() {
     </div>
   )
 }
+<footer class="site-footer">
+    <div class="footer-content">
+        <p>© 2026 Magic Hands Detailing Specialists. A service operated by MOTELSGROUP, LLC.</p>
+    </div>
+</footer>
+
+<style>
+    .site-footer {
+        background-color: #111111;
+        color: #ffffff;
+        text-align: center;
+        padding: 20px 0;
+        font-family: inherit;
+        font-size: 14px;
+        border-top: 1px solid #222222;
+    }
+    
+    .site-footer p {
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+</style>
