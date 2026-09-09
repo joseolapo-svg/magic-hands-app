@@ -638,11 +638,11 @@ function LandingPage({
 function SuccessScreen({
   partner,
   onDashboard,
-  onBack, // <--- 1. Añadimos la prop onBack para manejar el retroceso
+  onBack,
 }: {
   partner: Partner
   onDashboard: () => void
-  onBack: () => void // <--- 2. Tipamos la prop
+  onBack: () => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [downloaded, setDownloaded] = useState(false)
@@ -755,7 +755,6 @@ function SuccessScreen({
         }}
       >
         <Logo />
-        {/* 3. Contenedor para alinear el botón de Retroceder y el de Ir al Dashboard */}
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <button
             onClick={onBack}
@@ -1099,7 +1098,7 @@ function Dashboard({
   const completedCount = partnerReferrals.filter(
     (r) => r.status === "completed",
   ).length
-  const estimatedEarnings = completedCount * 150 // Mock calculation based on average ticket
+  const estimatedEarnings = completedCount * 150
 
   return (
     <div
@@ -1751,7 +1750,7 @@ function ClientForm({
   )
 }
 
-// ─── Root App (Actualización en la llamada a SuccessScreen) ──────────────────
+// ─── Root App ───────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing")
   const [currentPartner, setCurrentPartner] = useState<Partner | null>(null)
@@ -1812,17 +1811,15 @@ export default function App() {
           <SuccessScreen
             partner={currentPartner}
             onDashboard={() => setScreen("dashboard")}
-            onBack={() => setScreen("landing")} // <--- 4. Conectamos la acción para regresar al formulario (landing)
+            onBack={() => setScreen("landing")}
           />
         )}
         {screen === "dashboard" && (
-          <>
-            <Dashboard
-              partner={activeDashboardPartner}
-              allPartners={partners}
-              referrals={referrals}
-            />
-          </>
+          <Dashboard
+            partner={activeDashboardPartner}
+            allPartners={partners}
+            referrals={referrals}
+          />
         )}
         {screen === "client" && (
           <ClientForm partners={partners} onSubmit={handleClientReferral} />
