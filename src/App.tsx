@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 // ==========================================
-// TIPOS Y DEFINICIONES
+// TIPOS Y DEFINICIONES ORIGINALES
 // ==========================================
 type Screen = "landing" | "success" | "dashboard" | "client";
 
@@ -26,9 +26,6 @@ interface ClientReferral {
   date: string;
 }
 
-// ==========================================
-// CONSTANTES DE DISEÑO (ESTILO CORPORATIVO)
-// ==========================================
 const C = {
   navy: "#0A0F1D",
   cardBg: "#111827",
@@ -39,7 +36,6 @@ const C = {
   textMuted: "#9CA3AF",
 };
 
-// Datos semilla de respaldo si no hay Supabase configurado
 const SEED_PARTNERS: Partner[] = [
   {
     id: "MH-9921",
@@ -71,7 +67,6 @@ export default function App() {
   const [referrals, setReferrals] = useState<ClientReferral[]>(SEED_REFERRALS);
   const [currentPartner, setCurrentPartner] = useState<Partner>(SEED_PARTNERS[0]);
 
-  // Estados del Formulario de Registro B2B
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -84,20 +79,20 @@ export default function App() {
   
   const qrRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Manejador del teléfono adaptado para Brevo (permite '+', dígitos, espacios y guiones)
+  // CORRECCIÓN 1: Teléfono optimizado para Brevo (permite '+', dígitos, espacios y guiones)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.replace(/[^\d+\-\s()]/g, "");
     setForm((prev) => ({ ...prev, phone: cleaned }));
   };
 
-  // Registro del Socio (Sin fricción de checkbox)
+  // CORRECCIÓN 2: Envío directo sin requerir check manual (sms_opt_in por defecto en true)
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     const rawDigits = form.phone.replace(/\D/g, "");
     if (!form.name.trim() || !form.email.trim() || rawDigits.length < 7) {
-      setError("Por favor, ingresa un nombre válido, un correo y un teléfono correcto para la validación SMS.");
+      setError("Por favor, ingresa los datos requeridos y un teléfono válido para Brevo.");
       return;
     }
 
@@ -112,20 +107,18 @@ export default function App() {
         created_at: new Date().toISOString(),
       };
 
-      // Simulación de guardado e integración con validación automática de Brevo (sms_opt_in: true)
       setPartners((prev) => [newPartner, ...prev]);
       setCurrentPartner(newPartner);
       setDownloaded(false);
       setScreen("success");
     } catch (err) {
       console.error("Error en registro:", err);
-      setError("Ocurrió un error al procesar el registro. Inténtalo de nuevo.");
+      setError("Ocurrió un error al procesar el registro.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Generador del Código QR en Canvas
   useEffect(() => {
     if (screen === "success" && qrRef.current) {
       const canvas = qrRef.current;
@@ -133,16 +126,12 @@ export default function App() {
       if (ctx) {
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Simulación visual de estructura QR interna y branding
         ctx.fillStyle = C.navy;
         ctx.fillRect(20, 20, 60, 60);
         ctx.fillRect(120, 20, 40, 40);
         ctx.fillRect(20, 120, 40, 40);
         ctx.fillStyle = C.gold;
         ctx.fillRect(30, 30, 40, 40);
-        
-        // Texto identificador del socio dentro del canvas
         ctx.font = "bold 12px sans-serif";
         ctx.fillStyle = "#111827";
         ctx.textAlign = "center";
@@ -163,7 +152,7 @@ export default function App() {
 
   return (
     <div style={{ backgroundColor: C.navy, color: C.textMain, minHeight: "100vh" }} className="flex flex-col font-sans antialiased">
-      {/* HEADER CORPORATIVO */}
+      {/* HEADER ORIGINAL */}
       <header className="border-b border-gray-800 px-6 py-4 flex justify-between items-center bg-gray-950/60 backdrop-blur sticky top-0 z-50">
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center font-black text-gray-950 text-lg shadow-md shadow-amber-500/20">
@@ -191,10 +180,9 @@ export default function App() {
         </nav>
       </header>
 
-      {/* CONTENIDO PRINCIPAL SEGÚN PANTALLA */}
+      {/* CONTENIDO PRINCIPAL ORIGINAL */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-4xl mx-auto w-full">
         
-        {/* PANTALLA 1: LANDING & FORMULARIO DE REGISTRO */}
         {screen === "landing" && (
           <div className="w-full grid md:grid-cols-2 gap-8 items-center py-6">
             <div className="space-y-4">
@@ -270,6 +258,7 @@ export default function App() {
                   />
                 </div>
 
+                {/* BOTÓN DE ENVÍO DIRECTO SIN CHECKBOX MANUAL */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -282,7 +271,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PANTALLA 2: ÉXITO Y KIT QR DEL SOCIO */}
         {screen === "success" && (
           <div className="w-full max-w-md bg-gray-900 border border-gray-800 p-8 rounded-2xl text-center space-y-6 shadow-2xl">
             <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto font-bold text-xl">
@@ -319,7 +307,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PANTALLA 3: DASHBOARD DE RENDIMIENTO Y COMISIONES */}
         {screen === "dashboard" && (
           <div className="w-full space-y-6 py-4">
             <div className="flex justify-between items-center bg-gray-900 border border-gray-800 p-6 rounded-2xl">
@@ -336,7 +323,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Estadísticas rápidas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-900 border border-gray-800 p-5 rounded-xl">
                 <span className="text-xs text-gray-400 uppercase font-medium">Clientes Referidos</span>
@@ -356,7 +342,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Listado de Referencias */}
             <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
               <div className="px-6 py-4 border-b border-gray-800 flex justify-between items-center">
                 <h4 className="font-bold text-sm text-white">Historial de Referencias y Estado</h4>
@@ -393,7 +378,6 @@ export default function App() {
 
       </main>
 
-      {/* FOOTER */}
       <footer className="border-t border-gray-900 py-4 px-6 text-center text-[11px] text-gray-500 bg-gray-950">
         Grupo Empresarial Villacís • MOTELSGROUP, LLC &copy; 2026. Todos los derechos reservados.
       </footer>
