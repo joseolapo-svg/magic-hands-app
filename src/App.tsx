@@ -936,7 +936,7 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
               <div style={{ marginBottom: 0 }}>
                 <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "8px" }}>4. SMS Communication Terms &amp; Conditions</h4>
                 <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Consent &amp; Purpose:</strong> By registering as a Partner and providing your mobile phone number, you explicitly consent to receive recurring marketing, promotional, operational, and transactional SMS messages from Magic Hands, operated by MOTELSGROUP, LLC.
+                  <strong style={{ color: C.white }}>Consent &amp; Purpose:</strong> Consent to receive marketing SMS is completely optional and is not a condition of registering for the Magic Hands Partner Program. Users who choose to check the optional consent box explicitly agree to receive recurring marketing, promotional, and operational text messages from Magic Hands, operated by MOTELSGROUP, LLC.
                 </p>
                 <p style={{ margin: "0 0 10px 0" }}>
                   <strong style={{ color: C.white }}>Rates &amp; Frequency:</strong> Message frequency varies based on account activity. Message and data rates may apply.
