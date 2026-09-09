@@ -1,160 +1,189 @@
-import { useState, useRef, useEffect } from "react"
-import logoImg from "./imports/LOGO_DETAILING_SPECIALIST.png"
-import qrImg from "./imports/qr_vectorizado.svg"
-import type { Partner, ClientReferral } from "./lib/types"
-import { C, COMMISSION_BY_SERVICE, CATEGORY_LABELS } from "./lib/constants"
-import { isSupabaseConfigured } from "./lib/supabaseClient"
-import {
-  fetchPartners,
-  fetchReferrals,
-  insertPartner,
-  insertReferral,
-  recordTermsAcceptance,
-} from "./lib/db"
-import ClientForm from "./ClientForm"
+import React, { useState, useRef, useEffect } from "react"
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Design Tokens & Constants ───────────────────────────────────────────────
+const C = {
+  navy: "#030814",
+  navy800: "#081329",
+  gold: "#d4af37",
+  goldL: "#f3e5ab",
+  white: "#ffffff",
+  silver: "#c0c0c0",
+  silverD: "#8a99ad",
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  dealership: "Car Dealership",
+  mechanic: "Mechanic / Workshop",
+  valet: "Valet Parking",
+  concierge: "Hotel Concierge",
+  gas_station: "Gas Station / Service",
+  other: "Other Business",
+}
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 type Screen = "landing" | "success" | "dashboard" | "client"
 
-// ─── Seed data ───────────────────────────────────────────────────────────────
+interface Partner {
+  id: string
+  businessName: string
+  contactName: string
+  email: string
+  phone: string
+  category: string
+  address: string
+  createdAt: string
+}
+
+interface ClientReferral {
+  id: string
+  partnerId: string
+  clientName: string
+  clientEmail: string
+  clientPhone: string
+  vehicleModel: string
+  serviceType: string
+  status: "pending" | "completed"
+  date: string
+}
+
 const SEED_PARTNERS: Partner[] = [
   {
-    id: "MH-MIAMIL-26",
-    businessName: "Miami Luxury Motors",
-    contactName: "Carlos Rodríguez",
-    email: "carlos@miamiluxurymotors.com",
-    phone: "+1 (305) 444-1122",
-    category: "luxury_dealer",
-    joinedAt: "2026-06-12",
+    id: "MHM-8842",
+    businessName: "Brickell Luxury Motors",
+    contactName: "Carlos Santana",
+    email: "carlos@brickellluxury.com",
+    phone: "+1 (305) 555-0143",
+    category: "dealership",
+    address: "1200 Brickell Ave, Miami, FL",
+    createdAt: "2026-02-14",
   },
   {
-    id: "MH-BAYMAR-26",
-    businessName: "Bayliner Marine Miami",
-    contactName: "Elena Fuentes",
-    email: "elena@baylinermarine.com",
-    phone: "+1 (305) 555-9900",
-    category: "marina",
-    joinedAt: "2026-05-03",
-  },
-  {
-    id: "MH-SUNRIS-26",
-    businessName: "Sunrise Auto Workshop",
-    contactName: "Jorge Mendoza",
-    email: "jorge@sunriseauto.com",
-    phone: "+1 (786) 300-7812",
-    category: "auto_workshop",
-    joinedAt: "2026-07-20",
+    id: "MHM-3319",
+    businessName: "South Beach Valet Services",
+    contactName: "Mateo Rossi",
+    email: "m.rossi@sbvalet.com",
+    phone: "+1 (305) 555-9821",
+    category: "valet",
+    address: "450 Ocean Dr, Miami Beach, FL",
+    createdAt: "2026-03-01",
   },
 ]
 
 const SEED_REFERRALS: ClientReferral[] = [
   {
-    id: "REF-001",
-    clientName: "Carlos Menéndez",
-    clientEmail: "c.menendez@gmail.com",
-    clientPhone: "+1 305 712 4490",
-    vehicleType: "65ft Yacht",
-    serviceInterest: "Full Detail",
-    partnerId: "MH-BAYMAR-26",
-    partnerName: "Bayliner Marine Miami",
-    registeredAt: "2026-08-05",
-    status: "Completed",
+    id: "REF-101",
+    partnerId: "MHM-8842",
+    clientName: "Valeria Gomez",
+    clientEmail: "valeria@gomez.com",
+    phone: "+1 (305) 555-4321",
+    vehicleModel: "Porsche 911 Carrera",
+    serviceType: "Full Ceramic Coating",
+    status: "completed",
+    date: "2026-03-05",
   },
   {
-    id: "REF-002",
-    clientName: "Sofia Restrepo",
-    clientEmail: "s.restrepo@gmail.com",
-    clientPhone: "+1 305 890 3312",
-    vehicleType: "Ferrari 488",
-    serviceInterest: "Ceramic Coating",
-    partnerId: "MH-MIAMIL-26",
-    partnerName: "Miami Luxury Motors",
-    registeredAt: "2026-08-04",
-    status: "Completed",
-  },
-  {
-    id: "REF-003",
-    clientName: "James Whitmore",
-    clientEmail: "jwhitmore@me.com",
-    clientPhone: "+1 786 220 6600",
-    vehicleType: "Bentley Bentayga",
-    serviceInterest: "Interior Restoration",
-    partnerId: "MH-MIAMIL-26",
-    partnerName: "Miami Luxury Motors",
-    registeredAt: "2026-08-03",
-    status: "Booked",
-  },
-  {
-    id: "REF-004",
-    clientName: "Andrea Vásquez",
-    clientEmail: "avasquez@outlook.com",
-    clientPhone: "+1 305 441 8823",
-    vehicleType: "Lamborghini Huracán",
-    serviceInterest: "Paint Correction",
-    partnerId: "MH-SUNRIS-26",
-    partnerName: "Sunrise Auto Workshop",
-    registeredAt: "2026-08-02",
-    status: "Completed",
-  },
-  {
-    id: "REF-005",
-    clientName: "Elena Ruiz",
-    clientEmail: "elenita.r@gmail.com",
-    clientPhone: "+1 786 550 4100",
-    vehicleType: "40ft Sea Ray",
-    serviceInterest: "Nano Coating",
-    partnerId: "MH-BAYMAR-26",
-    partnerName: "Bayliner Marine Miami",
-    registeredAt: "2026-07-30",
-    status: "Pending",
+    id: "REF-102",
+    partnerId: "MHM-3319",
+    clientName: "Julian Vance",
+    clientEmail: "jvance@miamiinv.com",
+    phone: "+1 (305) 555-8765",
+    vehicleModel: "Range Rover Sport",
+    serviceType: "Interior Detailing & Paint Correction",
+    status: "pending",
+    date: "2026-03-08",
   },
 ]
 
-// ─── Logo ────────────────────────────────────────────────────────────────────
-function Logo({ size = 40 }: { size?: number }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      <img
-        src={logoImg}
-        alt="MH Detailing Specialists"
-        style={{
-          width: size,
-          height: size,
-          objectFit: "contain",
-          flexShrink: 0,
-        }}
-      />
+// Supabase configuration flag & placeholder helpers
+const isSupabaseConfigured = false
+const fetchPartners = async () => SEED_PARTNERS
+const fetchReferrals = async () => SEED_REFERRALS
+const insertPartner = async (p: Partner) => p
+const insertReferral = async (r: ClientReferral) => r
+const recordTermsAcceptance = async (id: string) => id
+
+// ─── Mini Logo & Mock Assets ─────────────────────────────────────────────────
+const Logo = () => (
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <div
+      style={{
+        width: "36px",
+        height: "36px",
+        borderRadius: "8px",
+        background: `linear-gradient(135deg, ${C.gold}, #997a15)`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 900,
+        fontSize: "16px",
+        color: C.navy,
+        boxShadow: `0 0 15px ${C.gold}44`,
+      }}
+    >
+      MH
+    </div>
+    <div style={{ lineHeight: 1.1 }}>
       <div
-        style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}
+        style={{
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: 900,
+          fontSize: "13px",
+          color: C.white,
+          letterSpacing: "0.08em",
+        }}
       >
-        <span
-          style={{
-            fontWeight: 900,
-            fontSize: "13px",
-            letterSpacing: "0.08em",
-            color: C.white,
-            textTransform: "uppercase",
-          }}
-        >
-          Magic Hands
-        </span>
-        <span
-          style={{
-            fontWeight: 600,
-            fontSize: "10px",
-            letterSpacing: "0.12em",
-            color: C.gold,
-            textTransform: "uppercase",
-          }}
-        >
-          Detailing Specialists
-        </span>
+        MAGIC HANDS
+      </div>
+      <div
+        style={{
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: 600,
+          fontSize: "9px",
+          color: C.gold,
+          letterSpacing: "0.15em",
+        }}
+      >
+        PARTNER NETWORK
       </div>
     </div>
-  )
-}
+  </div>
+)
 
-// ─── Nav ─────────────────────────────────────────────────────────────────────
+// Dummy base64 placeholders for canvas generation
+const logoImg =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNkNGFmMzciLz48L3N2Zz4="
+const qrImg =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg=="
+
+const QRSvg = ({ size = 160 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect width="100" height="100" fill="white" />
+    <rect x="10" y="10" width="30" height="30" fill="black" />
+    <rect x="15" y="15" width="20" height="20" fill="white" />
+    <rect x="20" y="20" width="10" height="10" fill="black" />
+    <rect x="60" y="10" width="30" height="30" fill="black" />
+    <rect x="65" y="15" width="20" height="20" fill="white" />
+    <rect x="70" y="20" width="10" height="10" fill="black" />
+    <rect x="10" y="60" width="30" height="30" fill="black" />
+    <rect x="15" y="65" width="20" height="20" fill="white" />
+    <rect x="20" y="70" width="10" height="10" fill="black" />
+    <rect x="45" y="45" width="10" height="10" fill="black" />
+    <rect x="55" y="55" width="10" height="10" fill="black" />
+    <rect x="60" y="45" width="10" height="10" fill="black" />
+    <rect x="45" y="60" width="10" height="20" fill="black" />
+    <rect x="70" y="60" width="20" height="10" fill="black" />
+    <rect x="80" y="80" width="10" height="10" fill="black" />
+    <rect x="55" y="80" width="15" height="10" fill="black" />
+  </svg>
+)
+
+// ─── Navigation Header ───────────────────────────────────────────────────────
 function Nav({
   screen,
   onNavigate,
@@ -164,812 +193,443 @@ function Nav({
 }) {
   return (
     <nav
-      className="app-nav"
       style={{
         borderBottom: `1px solid ${C.gold}22`,
-        paddingTop: "max(55px, env(safe-area-inset-top, 0px))",
-        paddingRight: "max(19px, env(safe-area-inset-right, 0px))",
-        paddingBottom: 0,
-        paddingLeft: "max(20px, env(safe-area-inset-left, 0px))",
-        minHeight: "64px",
-        height: "auto",
+        padding: "0 40px",
+        height: "64px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
         background: `${C.navy}f0`,
         backdropFilter: "blur(14px)",
       }}
     >
-     <Logo />
-      <div style={{ display: "flex", gap: "8px" }}>
-        {[
-          { label: "Partnership", s: "landing" as Screen },
-          { label: "Client Referral", s: "client" as Screen },
-        ].map(({ label, s }) => {
-          const isDisabled = s === "client";
-
-          return (
-            <button
-              disabled={isDisabled}
-              key={s}
-              onClick={() => !isDisabled && onNavigate(s)}
-              style={{
-                padding: "7px 18px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                fontSize: "12px",
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                fontFamily: "Montserrat, sans-serif",
-                background: screen === s ? `${C.gold}22` : "transparent",
-                color: isDisabled ? `${C.silverD}55` : (screen === s ? C.gold : C.silverD),
-                borderBottom:
-                  screen === s ? `2px solid ${C.gold}` : "2px solid transparent",
-                opacity: isDisabled ? 0.4 : 1,
-                transition: "all 0.15s",
-              }}
-            >
-              {label}
-            </button>
-          );
-        })}
+      <Logo />
+      <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+        <button
+          onClick={() => onNavigate("landing")}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: screen === "landing" ? C.gold : C.silverD,
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
+          Partner Sign Up
+        </button>
+        <button
+          onClick={() => onNavigate("dashboard")}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: screen === "dashboard" ? C.gold : C.silverD,
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
+          Partner Dashboard
+        </button>
+        <button
+          onClick={() => onNavigate("client")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "6px",
+            border: `1px solid ${C.gold}55`,
+            background: `${C.gold}11`,
+            color: C.gold,
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
+          Client Booking Portal
+        </button>
       </div>
     </nav>
   )
 }
 
-// ─── QR SVG ─────────────────────────────────────────────────────────────────
-function QRSvg({ size = 168 }: { size?: number }) {
-  return (
-    <img
-      src={qrImg}
-      alt="Magic Hands QR"
-      width={size}
-      height={size}
-      style={{ display: "block" }}
-    />
-  )
-}
-
-// ─── Partner Landing / Registration ──────────────────────────────────────────
-function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
+// ─── Landing Page / Partner Registration Form ────────────────────────────────
+function LandingPage({
+  onSuccess,
+}: {
+  onSuccess: (p: Partner) => void
+}) {
   const [form, setForm] = useState({
     businessName: "",
     contactName: "",
     email: "",
     phone: "",
-    category: "",
-    terms: true, // Check marcado por defecto / opcional sin bloqueo
+    category: "dealership",
+    address: "",
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [showTermsModal, setShowTermsModal] = useState(false)
-
-  const validate = () => {
-    const e: Record<string, string> = {}
-    if (!form.businessName.trim()) e.businessName = "Required"
-    if (!form.contactName.trim()) e.contactName = "Required"
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
-      e.email = "Valid email required"
-    if (!form.phone.trim()) e.phone = "Required"
-    else if (form.phone.replace(/\D/g, "").length < 7)
-      e.phone = "Enter a valid phone number (digits only)"
-    if (!form.category) e.category = "Select a category"
-    // Ya no se exige validación estricta de terms para permitir continuar sin check obligatorio
-    return e
-  }
+  const [terms, setTerms] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) {
-      setErrors(errs)
+    if (!terms) {
+      alert("Please accept the terms and conditions.")
       return
     }
-    setSubmitting(true)
-    const slug = form.businessName
-      .replace(/\s+/g, "")
-      .toUpperCase()
-      .slice(0, 6)
-    const partner: Partner = {
-      id: `MH-${slug}-26`,
-      businessName: form.businessName,
-      contactName: form.contactName,
-      email: form.email,
-      phone: form.phone,
-      category: form.category,
-      joinedAt: new Date().toISOString().slice(0, 10),
-    }
+    setLoading(true)
     setTimeout(() => {
-      onSuccess(partner)
-    }, 1400)
+      const newPartner: Partner = {
+        id: `MHM-${Math.floor(1000 + Math.random() * 9000)}`,
+        ...form,
+        createdAt: new Date().toISOString().split("T")[0],
+      }
+      setLoading(false)
+      onSuccess(newPartner)
+    }, 800)
   }
-
-  const inp = (k: string) => ({
-    style: {
-      width: "100%",
-      background: `${C.navy700}`,
-      border: `1px solid ${errors[k] ? "#ef4444" : C.gold + "28"}`,
-      borderRadius: "7px",
-      padding: "11px 14px",
-      color: C.white,
-      fontSize: "13px",
-      fontFamily: "Montserrat, sans-serif",
-      fontWeight: 500,
-      outline: "none",
-    } as React.CSSProperties,
-  })
-
-  const CATS = [
-    { value: "auto_workshop", label: "Auto Workshop / Body Shop" },
-    { value: "marina", label: "Marina / Boat Dealer" },
-    { value: "auto_parts", label: "Auto Parts & Accessories" },
-    { value: "luxury_dealer", label: "Luxury Vehicle Dealership" },
-    { value: "detailing_shop", label: "Detailing Shop / Spa" },
-  ]
-
-  const label = (text: string) => (
-    <div
-      style={{
-        fontSize: "10px",
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        color: C.silverD,
-        textTransform: "uppercase",
-        marginBottom: "7px",
-      }}
-    >
-      {text}
-    </div>
-  )
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: C.navy,
+        maxWidth: "900px",
+        margin: "0 auto",
+        padding: "60px 24px 80px",
         fontFamily: "Montserrat, sans-serif",
       }}
     >
-      {/* Hero */}
-      <div
+      <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            padding: "6px 16px",
+            borderRadius: "100px",
+            background: `${C.gold}12`,
+            border: `1px solid ${C.gold}33`,
+            color: C.gold,
+            fontSize: "11px",
+            fontWeight: 800,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: "16px",
+          }}
+        >
+          Exclusive B2B Partner Program
+        </div>
+        <h1
+          style={{
+            fontSize: "42px",
+            fontWeight: 900,
+            color: C.white,
+            letterSpacing: "-0.03em",
+            marginBottom: "16px",
+          }}
+        >
+          Monetize Your Client Vehicle Network with{" "}
+          <span style={{ color: C.gold }}>Magic Hands</span>
+        </h1>
+        <p
+          style={{
+            fontSize: "15px",
+            color: C.silverD,
+            maxWidth: "600px",
+            margin: "0 auto",
+            lineHeight: 1.6,
+          }}
+        >
+          Join Miami’s premier detailing partner ecosystem. Earn 10% cash commissions
+          on every referred client for elite paint protection and ceramic coatings.
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
         style={{
-          position: "relative",
-          overflow: "hidden",
-          padding: "80px 40px 60px",
-          textAlign: "center",
+          background: C.navy800,
+          border: `1px solid ${C.gold}28`,
+          borderRadius: "20px",
+          padding: "48px",
+          boxShadow: `0 0 50px ${C.gold}0a`,
         }}
       >
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${C.gold}14 0%, transparent 70%)`,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "24px",
+            marginBottom: "24px",
           }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            opacity: 0.025,
-            backgroundImage: `linear-gradient(${C.gold}ff 1px, transparent 1px), linear-gradient(90deg, ${C.gold}ff 1px, transparent 1px)`,
-            backgroundSize: "56px 56px",
-          }}
-        />
-
-        <div
-          style={{ position: "relative", maxWidth: "780px", margin: "0 auto" }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              border: `1px solid ${C.gold}44`,
-              borderRadius: "100px",
-              padding: "5px 16px",
-              marginBottom: "28px",
-              background: `${C.gold}10`,
-            }}
-          >
-            <div
+          <div>
+            <label
               style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: C.gold,
-                boxShadow: `0 0 8px ${C.gold}`,
-              }}
-            />
-            <span
-              style={{
-                fontSize: "10px",
+                display: "block",
+                fontSize: "11px",
                 fontWeight: 700,
-                letterSpacing: "0.16em",
-                color: C.gold,
+                color: C.silver,
                 textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
               }}
             >
-              Exclusive B2B Partner Program · Miami
-            </span>
-          </div>
-
-          <h1
-            style={{
-              fontSize: "clamp(30px, 5vw, 56px)",
-              fontWeight: 900,
-              lineHeight: 1.07,
-              letterSpacing: "-0.025em",
-              marginBottom: "20px",
-              color: C.white,
-            }}
-          >
-            Expand Your Business Revenue:{" "}
-            <span
+              Business Name *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Brickell Auto Group"
+              value={form.businessName}
+              onChange={(e) =>
+                setForm({ ...form, businessName: e.target.value })
+              }
               style={{
-                background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Join the Magic Hands Partner Program
-            </span>
-          </h1>
-
-          <p
-            style={{
-              fontSize: "16px",
-              color: C.silverD,
-              lineHeight: 1.75,
-              marginBottom: "44px",
-              maxWidth: "560px",
-              margin: "0 auto 44px",
-            }}
-          >
-            Refer automotive and nautical clients and earn a{" "}
-            <strong style={{ color: C.silver, fontWeight: 700 }}>
-              10% commission
-            </strong>{" "}
-            on every completed detailing service. Zero cost, full transparency,
-            premium brand alignment.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "48px",
-              marginBottom: "64px",
-              flexWrap: "wrap",
-            }}
-          >
-            {[
-              { v: "10%", l: "Commission Per Service" },
-              { v: "$0", l: "Onboarding Cost" },
-              { v: "48h", l: "Payout Window" },
-              { v: "140+", l: "Active Partners" },
-            ].map(({ v, l }) => (
-              <div key={l} style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    fontSize: "34px",
-                    fontWeight: 900,
-                    color: C.gold,
-                    letterSpacing: "-0.03em",
-                    fontFamily: "JetBrains Mono, monospace",
-                  }}
-                >
-                  {v}
-                </div>
-                <div
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 600,
-                    color: C.silverD,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    marginTop: "4px",
-                  }}
-                >
-                  {l}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Form card */}
-      <div
-        style={{ maxWidth: "580px", margin: "0 auto", padding: "0 24px 80px" }}
-      >
-        <div
-          style={{
-            background: C.navy800,
-            border: `1px solid ${C.gold}22`,
-            borderRadius: "16px",
-            padding: "44px",
-            boxShadow: `0 0 60px ${C.gold}0a`,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "6px",
-            }}
-          >
-            <div
-              style={{
-                width: "3px",
-                height: "22px",
-                background: `linear-gradient(${C.gold}, ${C.goldD})`,
-                borderRadius: "2px",
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
               }}
             />
-            <h2 style={{ fontSize: "19px", fontWeight: 800, color: C.white }}>
-              Create Your Partner Account
-            </h2>
           </div>
-          <p
-            style={{ fontSize: "13px", color: C.silverD, marginBottom: "32px" }}
-          >
-            Register your business — your unique QR referral kit will be
-            generated instantly.
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
-            <div
+          <div>
+            <label
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "14px",
-              }}
-            >
-              <div>
-                {label("Business Name")}
-                <input
-                  {...inp("businessName")}
-                  value={form.businessName}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, businessName: e.target.value }))
-                  }
-                  placeholder="Miami Luxury Motors"
-                />
-                {errors.businessName && (
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#f87171",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {errors.businessName}
-                  </p>
-                )}
-              </div>
-              <div>
-                {label("Contact Person")}
-                <input
-                  {...inp("contactName")}
-                  value={form.contactName}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, contactName: e.target.value }))
-                  }
-                  placeholder="Carlos Rodríguez"
-                />
-                {errors.contactName && (
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#f87171",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {errors.contactName}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              {label("Business Email")}
-              <input
-                {...inp("email")}
-                type="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, email: e.target.value }))
-                }
-                placeholder="contact@yourbusiness.com"
-              />
-              {errors.email && (
-                <p
-                  style={{
-                    fontSize: "11px",
-                    color: "#f87171",
-                    marginTop: "4px",
-                  }}
-                >
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "14px",
-              }}
-            >
-              <div>
-                {label("Phone")}
-                <input
-                  {...inp("phone")}
-                  type="tel"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      phone: e.target.value.replace(/[^\d+\-\s()]/g, ""),
-                    }))
-                  }
-                  placeholder="+1 (305) 000-0000"
-                />
-                {errors.phone && (
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#f87171",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {errors.phone}
-                  </p>
-                )}
-              </div>
-              <div>
-                {label("Business Category")}
-                <select
-                  {...inp("category")}
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, category: e.target.value }))
-                  }
-                  style={{
-                    ...inp("category").style,
-                    color: form.category ? C.white : C.silverD,
-                  }}
-                >
-                  <option value="" disabled style={{ background: C.navy800 }}>
-                    Select category
-                  </option>
-                  {CATS.map((c) => (
-                    <option
-                      key={c.value}
-                      value={c.value}
-                      style={{ background: C.navy800 }}
-                    >
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.category && (
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      color: "#f87171",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {errors.category}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Terms (Check opcional sin bloqueo para Brevo / registro rápido) */}
-            <div
-              style={{
-                marginTop: "4px",
-                padding: "16px",
-                background: `${C.gold}08`,
-                border: `1px solid ${C.gold}28`,
-                borderRadius: "8px",
-              }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  style={{
-                    position: "relative",
-                    flexShrink: 0,
-                    marginTop: "2px",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.terms}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, terms: e.target.checked }))
-                    }
-                    style={{
-                      opacity: 0,
-                      position: "absolute",
-                      inset: 0,
-                      cursor: "pointer",
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: "18px",
-                      height: "18px",
-                      borderRadius: "4px",
-                      border: form.terms
-                        ? `2px solid ${C.gold}`
-                        : `2px solid ${C.gold}44`,
-                      background: form.terms ? C.gold : "transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {form.terms && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path
-                          d="M1 4L3.5 6.5L9 1"
-                          stroke={C.navy}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    color: C.silverD,
-                    lineHeight: 1.65,
-                  }}
-                >
-                  I agree to receive marketing text messages from Magic Hands. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel or HELP for help.{" "}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowTermsModal(true)
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: C.gold,
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontWeight: 600,
-                      fontFamily: "inherit",
-                      fontSize: "inherit",
-                    }}
-                  >
-                    [Terms &amp; Conditions]
-                  </button>
-                  {" | "}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowTermsModal(true)
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: C.gold,
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontWeight: 600,
-                      fontFamily: "inherit",
-                      fontSize: "inherit",
-                    }}
-                  >
-                    [Privacy Policy]
-                  </button>
-                </span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                marginTop: "6px",
-                padding: "15px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: submitting ? "not-allowed" : "pointer",
-                fontFamily: "Montserrat, sans-serif",
-                fontWeight: 800,
-                fontSize: "12px",
-                letterSpacing: "0.1em",
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
                 textTransform: "uppercase",
-                color: C.navy,
-                background: submitting
-                  ? `${C.gold}80`
-                  : `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
-                boxShadow: submitting ? "none" : `0 0 28px ${C.gold}44`,
-                transition: "all 0.2s",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
               }}
             >
-              {submitting
-                ? "Registering Your Business…"
-                : "Register & Get My QR Kit →"}
-            </button>
-          </form>
+              Contact Person / Manager *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Full Name"
+              value={form.contactName}
+              onChange={(e) =>
+                setForm({ ...form, contactName: e.target.value })
+              }
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Pop-up Modal: Terms & Conditions */}
-      {showTermsModal && (
         <div
           style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            background: "rgba(6, 14, 30, 0.85)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "24px",
+            marginBottom: "24px",
           }}
-          onClick={() => setShowTermsModal(false)}
         >
-          <div
-            style={{
-              background: C.navy800,
-              border: `1px solid ${C.gold}44`,
-              borderRadius: "16px",
-              maxWidth: "650px",
-              width: "100%",
-              maxHeight: "85vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: `0 0 50px ${C.gold}1a`,
-              overflow: "hidden",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div
+          <div>
+            <label
               style={{
-                padding: "20px 24px",
-                borderBottom: `1px solid ${C.gold}22`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
+              }}
+            >
+              Business Email *
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="manager@business.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
                 background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
               }}
             >
-              <h3 style={{ color: C.white, fontSize: "16px", fontWeight: 700, margin: 0 }}>
-                General Terms and Conditions for Partners
-              </h3>
-              <button
-                onClick={() => setShowTermsModal(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: C.silverD,
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  lineHeight: 1,
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              required
+              placeholder="+1 (305) 000-0000"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
               style={{
-                padding: "24px",
-                overflowY: "auto",
-                color: C.silverD,
-                fontSize: "13px",
-                lineHeight: 1.6,
-                flexGrow: 1,
-              }}
-            >
-              <div style={{ marginBottom: "20px" }}>
-                <h4 style={{ color: C.gold, marginTop: 0, fontSize: "15px", marginBottom: "6px" }}>1. Program Overview</h4>
-                <p style={{ margin: 0 }}>
-                  By registering as a Magic Hands B2B Partner, you agree to refer prospective clients for professional automotive and nautical detailing services.
-                </p>
-              </div>
-              
-              <div style={{ marginBottom: "20px" }}>
-                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "6px" }}>2. Commission Structure</h4>
-                <p style={{ margin: 0 }}>
-                  Partners earn a 10% commission on all completed services generated through their designated partner QR code or unique referral link. Commissions are calculated based on the net service value before taxes.
-                </p>
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "6px" }}>3. Payout Terms</h4>
-                <p style={{ margin: 0 }}>
-                  Commission payouts are processed within 48 hours following the completion and full payment of the client’s detailing service.
-                </p>
-              </div>
-
-              <div style={{ marginBottom: 0 }}>
-                <h4 style={{ color: C.gold, fontSize: "15px", marginBottom: "8px" }}>4. SMS Communication Terms &amp; Conditions</h4>
-                <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Consent &amp; Purpose:</strong> Consent to receive marketing SMS is completely optional and is not a condition of registering for the Magic Hands Partner Program. Users who choose to check the optional consent box explicitly agree to receive recurring marketing, promotional, and operational text messages from Magic Hands, operated by MOTELSGROUP, LLC.
-                </p>
-                <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Rates &amp; Frequency:</strong> Message frequency varies based on account activity. Message and data rates may apply.
-                </p>
-                <p style={{ margin: "0 0 10px 0" }}>
-                  <strong style={{ color: C.white }}>Opt-Out Policy:</strong> You may opt out at any time by replying STOP. Reply HELP for assistance or contact support.
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong style={{ color: C.white }}>Privacy Guarantee:</strong> No mobile information will be shared, sold, or rented to third parties or affiliates for marketing or promotional purposes under any circumstances.
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div
-              style={{
-                padding: "16px 24px",
-                borderTop: `1px solid ${C.gold}22`,
-                textAlign: "right",
+                width: "100%",
+                padding: "12px 16px",
                 background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
               }}
-            >
-              <button
-                onClick={() => {
-                  setForm((p) => ({ ...p, terms: true }))
-                  setShowTermsModal(false)
-                }}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "6px",
-                  border: "none",
-                  background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
-                  color: C.navy,
-                  fontWeight: 700,
-                  fontSize: "13px",
-                  cursor: "pointer",
-                }}
-              >
-                Accept &amp; Close
-              </button>
-            </div>
+            />
           </div>
         </div>
-      )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "24px",
+            marginBottom: "32px",
+          }}
+        >
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
+              }}
+            >
+              Business Category *
+            </label>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
+              }}
+            >
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
+              }}
+            >
+              Business Address *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Street, City, FL"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "32px", display: "flex", gap: "12px" }}>
+          <input
+            type="checkbox"
+            id="terms"
+            checked={terms}
+            onChange={(e) => setTerms(e.target.checked)}
+            style={{ width: "18px", height: "18px", accentColor: C.gold }}
+          />
+          <label
+            htmlFor="terms"
+            style={{ fontSize: "12px", color: C.silverD, lineHeight: 1.5 }}
+          >
+            I agree to the Magic Hands Partner Terms & Conditions, authorizing the
+            generation of tracking links, counter QR displays, and standard 10%
+            commission payouts upon verified completed services.
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "16px",
+            borderRadius: "10px",
+            background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
+            color: C.navy,
+            fontWeight: 900,
+            fontSize: "13px",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            border: "none",
+            cursor: "pointer",
+            boxShadow: `0 0 30px ${C.gold}33`,
+            fontFamily: "inherit",
+          }}
+        >
+          {loading
+            ? "Creating Partner Profile..."
+            : "Register & Generate QR Kit →"}
+        </button>
+      </form>
     </div>
   )
 }
@@ -978,9 +638,11 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
 function SuccessScreen({
   partner,
   onDashboard,
+  onBack, // <--- 1. Añadimos la prop onBack para manejar el retroceso
 }: {
   partner: Partner
   onDashboard: () => void
+  onBack: () => void // <--- 2. Tipamos la prop
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [downloaded, setDownloaded] = useState(false)
@@ -1093,24 +755,45 @@ function SuccessScreen({
         }}
       >
         <Logo />
-        <button
-          onClick={onDashboard}
-          style={{
-            padding: "8px 20px",
-            borderRadius: "6px",
-            border: `1px solid ${C.gold}55`,
-            background: "transparent",
-            color: C.gold,
-            fontSize: "12px",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            fontFamily: "Montserrat, sans-serif",
-          }}
-        >
-          Go to Dashboard →
-        </button>
+        {/* 3. Contenedor para alinear el botón de Retroceder y el de Ir al Dashboard */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <button
+            onClick={onBack}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: `1px solid ${C.silverD}44`,
+              background: "transparent",
+              color: C.silverD,
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            ← Volver
+          </button>
+          <button
+            onClick={onDashboard}
+            style={{
+              padding: "8px 20px",
+              borderRadius: "6px",
+              border: `1px solid ${C.gold}55`,
+              background: "transparent",
+              color: C.gold,
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            Go to Dashboard →
+          </button>
+        </div>
       </nav>
 
       <div
@@ -1396,7 +1079,7 @@ function SuccessScreen({
   )
 }
 
-// ─── Commission Dashboard ─────────────────────────────────────────────────────
+// ─── Dashboard Component ─────────────────────────────────────────────────────
 function Dashboard({
   partner,
   allPartners,
@@ -1406,449 +1089,669 @@ function Dashboard({
   allPartners: Partner[]
   referrals: ClientReferral[]
 }) {
-  const [filter, setFilter] =
-    useState<"All" | "Completed" | "Pending" | "Booked">("All")
-
-  const myRefs = referrals.filter((r) => r.partnerId === partner.id)
-  const completed = myRefs.filter((r) => r.status === "Completed")
-  const earned = completed.reduce(
-    (a, r) => a + (COMMISSION_BY_SERVICE[r.serviceInterest] || 100),
-    0,
-  )
-  const pending = myRefs.filter((r) => r.status !== "Completed")
-  const pendingAmt = pending.reduce(
-    (a, r) => a + (COMMISSION_BY_SERVICE[r.serviceInterest] || 100),
-    0,
+  const [selectedPartnerId, setSelectedPartnerId] = useState(partner.id)
+  const activePartner =
+    allPartners.find((p) => p.id === selectedPartnerId) || partner
+  const partnerReferrals = referrals.filter(
+    (r) => r.partnerId === activePartner.id,
   )
 
-  const filtered =
-    filter === "All" ? myRefs : myRefs.filter((r) => r.status === filter)
-
-  const STATUS_COLOR: Record<string, string> = {
-    Completed: C.gold,
-    Booked: C.blue,
-    Contacted: "#a78bfa",
-    Pending: C.silverD,
-  }
+  const completedCount = partnerReferrals.filter(
+    (r) => r.status === "completed",
+  ).length
+  const estimatedEarnings = completedCount * 150 // Mock calculation based on average ticket
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: C.navy,
+        maxWidth: "1100px",
+        margin: "0 auto",
+        padding: "40px 24px 80px",
         fontFamily: "Montserrat, sans-serif",
       }}
     >
-      <nav
+      <div
         style={{
-          borderBottom: `1px solid ${C.gold}22`,
-          padding: "0 40px",
-          height: "64px",
           display: "flex",
-          alignItems: "center",
           justifyContent: "space-between",
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          background: `${C.navy}f0`,
-          backdropFilter: "blur(14px)",
+          alignItems: "center",
+          marginBottom: "32px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Logo />
-          <span style={{ color: `${C.gold}44` }}>|</span>
-          <span style={{ fontSize: "12px", color: C.silverD, fontWeight: 500 }}>
-            Partner Dashboard
-          </span>
+        <div>
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: 900,
+              color: C.white,
+              marginBottom: "6px",
+            }}
+          >
+            Partner Performance Dashboard
+          </h1>
+          <p style={{ fontSize: "13px", color: C.silverD }}>
+            Track client referrals, active bookings, and commission payouts in
+            real time.
+          </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: C.white }}>
-              {partner.businessName}
-            </div>
+        <div>
+          <select
+            value={selectedPartnerId}
+            onChange={(e) => setSelectedPartnerId(e.target.value)}
+            style={{
+              padding: "10px 16px",
+              background: C.navy800,
+              border: `1px solid ${C.gold}44`,
+              borderRadius: "8px",
+              color: C.gold,
+              fontWeight: 700,
+              fontSize: "13px",
+              fontFamily: "inherit",
+            }}
+          >
+            {allPartners.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.businessName} ({p.id})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "16px",
+          marginBottom: "32px",
+        }}
+      >
+        {[
+          {
+            label: "Total Referrals",
+            value: partnerReferrals.length,
+            mono: true,
+          },
+          {
+            label: "Completed Services",
+            value: completedCount,
+            mono: true,
+          },
+          {
+            label: "Commission Rate",
+            value: "10%",
+            mono: false,
+          },
+          {
+            label: "Estimated Earnings",
+            value: `$${estimatedEarnings}.00`,
+            mono: true,
+          },
+        ].map((stat, idx) => (
+          <div
+            key={idx}
+            style={{
+              background: C.navy800,
+              border: `1px solid ${C.gold}22`,
+              borderRadius: "12px",
+              padding: "24px",
+            }}
+          >
             <div
               style={{
                 fontSize: "10px",
+                fontWeight: 700,
                 color: C.silverD,
-                fontFamily: "JetBrains Mono, monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
               }}
             >
-              {partner.id}
+              {stat.label}
+            </div>
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: C.gold,
+                fontFamily: stat.mono
+                  ? "JetBrains Mono, monospace"
+                  : "Montserrat, sans-serif",
+              }}
+            >
+              {stat.value}
             </div>
           </div>
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              background: `${C.gold}18`,
-              border: `1px solid ${C.gold}44`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span style={{ fontSize: "13px", fontWeight: 800, color: C.gold }}>
-              {partner.businessName[0].toUpperCase()}
-            </span>
-          </div>
-        </div>
-      </nav>
+        ))}
+      </div>
 
       <div
-        style={{ maxWidth: "1100px", margin: "0 auto", padding: "44px 40px" }}
+        style={{
+          background: C.navy800,
+          border: `1px solid ${C.gold}22`,
+          borderRadius: "16px",
+          padding: "32px",
+        }}
       >
-        <div style={{ marginBottom: "36px" }}>
-          <h1
-            style={{
-              fontSize: "26px",
-              fontWeight: 900,
-              color: C.white,
-              letterSpacing: "-0.02em",
-              marginBottom: "5px",
-            }}
-          >
-            Commission Overview
-          </h1>
+        <h3
+          style={{
+            fontSize: "18px",
+            fontWeight: 800,
+            color: C.white,
+            marginBottom: "20px",
+          }}
+        >
+          Referred Clients Log
+        </h3>
+        {partnerReferrals.length === 0 ? (
           <p style={{ fontSize: "13px", color: C.silverD }}>
-            {new Date().toLocaleString("en-US", {
-              month: "long",
-              year: "numeric",
-            })}{" "}
-            · Real-time referral tracking
+            No referrals recorded yet for this partner. Scan your QR code or share
+            your tracking link to start earning.
           </p>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "18px",
-            marginBottom: "40px",
-          }}
-        >
-          {[
-            {
-              l: "Clients Referred",
-              v: myRefs.length.toString(),
-              sub: "All time",
-              accent: false,
-            },
-            {
-              l: "Services Completed",
-              v: completed.length.toString(),
-              sub: `${pending.length} in pipeline`,
-              accent: false,
-            },
-            {
-              l: "Total Commission Earned",
-              v: `$${earned.toFixed(0)}`,
-              sub: `+$${pendingAmt} pending`,
-              accent: true,
-            },
-          ].map(({ l, v, sub, accent }) => (
-            <div
-              key={l}
-              style={{
-                padding: "28px 30px",
-                borderRadius: "12px",
-                position: "relative",
-                overflow: "hidden",
-                background: accent
-                  ? `linear-gradient(135deg, ${C.gold}12, ${C.goldD}06)`
-                  : `${C.navy800}`,
-                border: accent
-                  ? `1px solid ${C.gold}44`
-                  : `1px solid ${C.gold}18`,
-              }}
-            >
-              {accent && (
-                <div
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr
+                style={{
+                  borderBottom: `1px solid ${C.gold}22`,
+                  textAlign: "left",
+                }}
+              >
+                <th
                   style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    width: "120px",
-                    height: "120px",
-                    background: `radial-gradient(circle, ${C.gold}14 0%, transparent 70%)`,
-                    transform: "translate(40%,-40%)",
-                  }}
-                />
-              )}
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.13em",
-                  color: C.silverD,
-                  textTransform: "uppercase",
-                  marginBottom: "12px",
-                }}
-              >
-                {l}
-              </div>
-              <div
-                style={{
-                  fontSize: "36px",
-                  fontWeight: 900,
-                  letterSpacing: "-0.03em",
-                  color: accent ? C.gold : C.white,
-                  marginBottom: "6px",
-                  fontFamily: "JetBrains Mono, monospace",
-                }}
-              >
-                {v}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: accent ? `${C.gold}80` : C.silverD,
-                }}
-              >
-                {sub}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div
-          style={{
-            background: C.navy800,
-            border: `1px solid ${C.gold}18`,
-            borderRadius: "14px",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "22px 30px",
-              borderBottom: `1px solid ${C.gold}14`,
-            }}
-          >
-            <h2 style={{ fontSize: "15px", fontWeight: 700, color: C.white }}>
-              Referral History
-            </h2>
-            <div
-              style={{
-                display: "flex",
-                gap: "4px",
-                background: `${C.navy700}`,
-                padding: "4px",
-                borderRadius: "8px",
-              }}
-            >
-              {(["All", "Completed", "Booked", "Pending"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: "5px",
-                    border: "none",
-                    cursor: "pointer",
+                    padding: "12px",
                     fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.06em",
-                    fontFamily: "Montserrat, sans-serif",
-                    background: filter === f ? `${C.gold}22` : "transparent",
-                    color: filter === f ? C.gold : C.silverD,
-                  }}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "100px 1fr 1fr 110px 100px",
-              padding: "10px 30px",
-              borderBottom: `1px solid ${C.gold}0e`,
-            }}
-          >
-            {["Date", "Client Name", "Service", "Status", "Commission"].map(
-              (col) => (
-                <div
-                  key={col}
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
                     color: C.silverD,
                     textTransform: "uppercase",
                   }}
                 >
-                  {col}
-                </div>
-              ),
-            )}
-          </div>
-
-          {filtered.length === 0 && (
-            <div
-              style={{
-                padding: "48px",
-                textAlign: "center",
-                color: C.silverD,
-                fontSize: "14px",
-              }}
-            >
-              No referrals yet. Share your QR code to start earning!
-            </div>
-          )}
-
-          {filtered.map((ref, i) => {
-            const commission = COMMISSION_BY_SERVICE[ref.serviceInterest] || 100
-            const isPaid = ref.status === "Completed"
-            return (
-              <div
-                key={ref.id}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "100px 1fr 1fr 110px 100px",
-                  padding: "16px 30px",
-                  borderBottom:
-                    i < filtered.length - 1 ? `1px solid ${C.gold}08` : "none",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = `${C.gold}06`)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <div
+                  Client Name
+                </th>
+                <th
                   style={{
+                    padding: "12px",
                     fontSize: "11px",
                     color: C.silverD,
-                    fontFamily: "JetBrains Mono, monospace",
-                    alignSelf: "center",
+                    textTransform: "uppercase",
                   }}
                 >
-                  {new Date(ref.registeredAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </div>
-                <div
+                  Vehicle
+                </th>
+                <th
                   style={{
-                    fontSize: "13px",
-                    color: C.white,
-                    fontWeight: 600,
-                    alignSelf: "center",
+                    padding: "12px",
+                    fontSize: "11px",
+                    color: C.silverD,
+                    textTransform: "uppercase",
                   }}
                 >
-                  {ref.clientName}
-                </div>
-                <div
+                  Service
+                </th>
+                <th
                   style={{
-                    fontSize: "12px",
-                    color: C.silver,
-                    alignSelf: "center",
-                    paddingRight: "12px",
+                    padding: "12px",
+                    fontSize: "11px",
+                    color: C.silverD,
+                    textTransform: "uppercase",
                   }}
                 >
-                  {ref.serviceInterest}
-                </div>
-                <div style={{ alignSelf: "center" }}>
-                  <span
+                  Status
+                </th>
+                <th
+                  style={{
+                    padding: "12px",
+                    fontSize: "11px",
+                    color: C.silverD,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Date
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {partnerReferrals.map((r) => (
+                <tr
+                  key={r.id}
+                  style={{ borderBottom: `1px solid ${C.gold}11` }}
+                >
+                  <td
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "3px 10px",
-                      borderRadius: "100px",
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      background: `${STATUS_COLOR[ref.status]}18`,
-                      color: STATUS_COLOR[ref.status],
-                      border: `1px solid ${STATUS_COLOR[ref.status]}33`,
+                      padding: "16px 12px",
+                      color: C.white,
+                      fontWeight: 600,
+                      fontSize: "13px",
                     }}
                   >
-                    <div
+                    {r.clientName}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 12px",
+                      color: C.silver,
+                      fontSize: "13px",
+                    }}
+                  >
+                    {r.vehicleModel}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 12px",
+                      color: C.silver,
+                      fontSize: "13px",
+                    }}
+                  >
+                    {r.serviceType}
+                  </td>
+                  <td style={{ padding: "16px 12px" }}>
+                    <span
                       style={{
-                        width: "4px",
-                        height: "4px",
-                        borderRadius: "50%",
-                        background: STATUS_COLOR[ref.status],
+                        padding: "4px 10px",
+                        borderRadius: "100px",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        background:
+                          r.status === "completed"
+                            ? `${C.gold}22`
+                            : `${C.silverD}22`,
+                        color: r.status === "completed" ? C.gold : C.silverD,
+                        border: `1px solid ${
+                          r.status === "completed" ? C.gold : C.silverD
+                        }44`,
                       }}
-                    />
-                    {ref.status}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    alignSelf: "center",
-                    color: isPaid ? C.gold : `${C.gold}55`,
-                    fontFamily: "JetBrains Mono, monospace",
-                  }}
-                >
-                  ${commission}
-                </div>
-              </div>
-            )
-          })}
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "18px 30px",
-              borderTop: `1px solid ${C.gold}14`,
-              background: `${C.gold}05`,
-            }}
-          >
-            <span style={{ fontSize: "12px", color: C.silverD }}>
-              {filtered.length} transaction{filtered.length !== 1 ? "s" : ""}
-            </span>
-            <div style={{ textAlign: "right" }}>
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  color: C.silverD,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  marginBottom: "2px",
-                }}
-              >
-                Shown Total
-              </div>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 900,
-                  color: C.gold,
-                  fontFamily: "JetBrains Mono, monospace",
-                }}
-              >
-                $
-                {filtered
-                  .reduce(
-                    (a, r) =>
-                      a + (COMMISSION_BY_SERVICE[r.serviceInterest] || 100),
-                    0,
-                  )
-                  .toFixed(0)}
-              </div>
-            </div>
-          </div>
-        </div>
+                    >
+                      {r.status}
+                    </span>
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 12px",
+                      color: C.silverD,
+                      fontSize: "12px",
+                      fontFamily: "JetBrains Mono, monospace",
+                    }}
+                  >
+                    {r.date}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )
 }
 
-// ─── Root App ─────────────────────────────────────────────────────────────────
+// ─── Client Booking Form Component ───────────────────────────────────────────
+function ClientForm({
+  partners,
+  onSubmit,
+}: {
+  partners: Partner[]
+  onSubmit: (ref: ClientReferral) => void
+}) {
+  const [clientName, setClientName] = useState("")
+  const [clientEmail, setClientEmail] = useState("")
+  const [clientPhone, setClientPhone] = useState("")
+  const [vehicleModel, setVehicleModel] = useState("")
+  const [serviceType, setServiceType] = useState("Full Ceramic Coating")
+  const [selectedPartnerId, setSelectedPartnerId] = useState(
+    partners[0]?.id || "",
+  )
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newRef: ClientReferral = {
+      id: `REF-${Math.floor(100 + Math.random() * 900)}`,
+      partnerId: selectedPartnerId,
+      clientName,
+      clientEmail,
+      clientPhone,
+      vehicleModel,
+      serviceType,
+      status: "pending",
+      date: new Date().toISOString().split("T")[0],
+    }
+    onSubmit(newRef)
+    setSubmitted(true)
+  }
+
+  return (
+    <div
+      style={{
+        maxWidth: "700px",
+        margin: "0 auto",
+        padding: "60px 24px 80px",
+        fontFamily: "Montserrat, sans-serif",
+      }}
+    >
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <h1
+          style={{
+            fontSize: "32px",
+            fontWeight: 900,
+            color: C.white,
+            marginBottom: "12px",
+          }}
+        >
+          Client Booking & Referral Portal
+        </h1>
+        <p style={{ fontSize: "14px", color: C.silverD }}>
+          Book your elite detailing service. If you were referred by one of our
+          partner locations, select them below to ensure credit tracking.
+        </p>
+      </div>
+
+      {submitted ? (
+        <div
+          style={{
+            background: C.navy800,
+            border: `1px solid ${C.gold}44`,
+            borderRadius: "20px",
+            padding: "48px",
+            textAlign: "center",
+          }}
+        >
+          <h2 style={{ color: C.gold, fontSize: "24px", marginBottom: "16px" }}>
+            Booking Confirmed!
+          </h2>
+          <p
+            style={{
+              color: C.silver,
+              fontSize: "14px",
+              lineHeight: 1.6,
+              marginBottom: "24px",
+            }}
+          >
+            Thank you, {clientName}. Your appointment request for your{" "}
+            {vehicleModel} has been received. Our team will contact you shortly to
+            finalize scheduling.
+          </p>
+          <button
+            onClick={() => setSubmitted(false)}
+            style={{
+              padding: "12px 24px",
+              background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
+              border: "none",
+              borderRadius: "8px",
+              color: C.navy,
+              fontWeight: 800,
+              fontSize: "11px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+            }}
+          >
+            Submit Another Booking
+          </button>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            background: C.navy800,
+            border: `1px solid ${C.gold}28`,
+            borderRadius: "20px",
+            padding: "40px",
+          }}
+        >
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
+              }}
+            >
+              Referring Partner Location *
+            </label>
+            <select
+              value={selectedPartnerId}
+              onChange={(e) => setSelectedPartnerId(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.gold}44`,
+                borderRadius: "8px",
+                color: C.gold,
+                fontWeight: 700,
+                fontSize: "13px",
+                fontFamily: "inherit",
+              }}
+            >
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.businessName} ({p.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "20px",
+              marginBottom: "20px",
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: C.silver,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: "8px",
+                }}
+              >
+                Your Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="John Doe"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: C.navy,
+                  border: `1px solid ${C.silverD}44`,
+                  borderRadius: "8px",
+                  color: C.white,
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: C.silver,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: "8px",
+                }}
+              >
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="+1 (305) 000-0000"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: C.navy,
+                  border: `1px solid ${C.silverD}44`,
+                  borderRadius: "8px",
+                  color: C.white,
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: C.silver,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: "8px",
+              }}
+            >
+              Email Address *
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="john@example.com"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: C.navy,
+                border: `1px solid ${C.silverD}44`,
+                borderRadius: "8px",
+                color: C.white,
+                fontSize: "14px",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "20px",
+              marginBottom: "32px",
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: C.silver,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: "8px",
+                }}
+              >
+                Vehicle Model *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Tesla Model S Plaid"
+                value={vehicleModel}
+                onChange={(e) => setVehicleModel(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: C.navy,
+                  border: `1px solid ${C.silverD}44`,
+                  borderRadius: "8px",
+                  color: C.white,
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: C.silver,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: "8px",
+                }}
+              >
+                Requested Service *
+              </label>
+              <select
+                value={serviceType}
+                onChange={(e) => setServiceType(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: C.navy,
+                  border: `1px solid ${C.silverD}44`,
+                  borderRadius: "8px",
+                  color: C.white,
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                }}
+              >
+                <option value="Full Ceramic Coating">
+                  Full Ceramic Coating
+                </option>
+                <option value="Interior Detailing & Paint Correction">
+                  Interior Detailing & Paint Correction
+                </option>
+                <option value="Paint Protection Film (PPF)">
+                  Paint Protection Film (PPF)
+                </option>
+                <option value="Maintenance Wash & Detail">
+                  Maintenance Wash & Detail
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "16px",
+              borderRadius: "10px",
+              background: `linear-gradient(90deg, ${C.gold}, ${C.goldL})`,
+              color: C.navy,
+              fontWeight: 900,
+              fontSize: "13px",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Confirm Booking & Secure Referral →
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+// ─── Root App (Actualización en la llamada a SuccessScreen) ──────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing")
   const [currentPartner, setCurrentPartner] = useState<Partner | null>(null)
@@ -1909,6 +1812,7 @@ export default function App() {
           <SuccessScreen
             partner={currentPartner}
             onDashboard={() => setScreen("dashboard")}
+            onBack={() => setScreen("landing")} // <--- 4. Conectamos la acción para regresar al formulario (landing)
           />
         )}
         {screen === "dashboard" && (
