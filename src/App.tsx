@@ -1093,24 +1093,45 @@ function SuccessScreen({
         }}
       >
         <Logo />
-        <button
-          onClick={onDashboard}
-          style={{
-            padding: "8px 20px",
-            borderRadius: "6px",
-            border: `1px solid ${C.gold}55`,
-            background: "transparent",
-            color: C.gold,
-            fontSize: "12px",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            fontFamily: "Montserrat, sans-serif",
-          }}
-        >
-          Go to Dashboard →
-        </button>
+       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <button
+            onClick={onBack}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: `1px solid ${C.silverD}44`,
+              background: "transparent",
+              color: C.silverD,
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            ← Volver
+          </button>
+          
+          <button
+            onClick={onDashboard}
+            style={{
+              padding: "8px 20px",
+              borderRadius: "6px",
+              border: `1px solid ${C.gold}55`,
+              background: "transparent",
+              color: C.gold,
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            Go to Dashboard →
+          </button>
+        </div>
       </nav>
 
       <div
@@ -1909,6 +1930,7 @@ export default function App() {
           <SuccessScreen
             partner={currentPartner}
             onDashboard={() => setScreen("dashboard")}
+            onBack={() => setScreen("landing")}
           />
         )}
         {screen === "dashboard" && (
