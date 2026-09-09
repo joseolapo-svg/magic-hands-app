@@ -978,9 +978,11 @@ function LandingPage({ onSuccess }: { onSuccess: (p: Partner) => void }) {
 function SuccessScreen({
   partner,
   onDashboard,
+  onBack,
 }: {
   partner: Partner
   onDashboard: () => void
+  onBack: () => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [downloaded, setDownloaded] = useState(false)
